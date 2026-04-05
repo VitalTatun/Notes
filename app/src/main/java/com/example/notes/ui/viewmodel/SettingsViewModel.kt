@@ -21,6 +21,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.io.BufferedReader
 import java.io.InputStreamReader
+import java.util.concurrent.TimeUnit
 
 data class SettingsUiState(
     val themeMode: String = "SYSTEM",
@@ -223,11 +224,17 @@ class SettingsViewModel(
     fun addSampleData() {
         viewModelScope.launch {
             try {
+                val now = System.currentTimeMillis()
+                val dayMillis = TimeUnit.DAYS.toMillis(1)
+
                 // Добавляем 50 заметок
                 for (i in 1..50) {
+                    val daysAgo = (i - 1) % 7
+                    val createdAt = now - (daysAgo * dayMillis) - (i * 60_000L)
                     notesRepository.addNote(
                         title = "Заметка #$i",
-                        content = "Это содержание тестовой заметки номер $i. Здесь может быть довольно длинный текст для проверки прокрутки и производительности списка в Material 3."
+                        content = "Это содержание тестовой заметки номер $i. Здесь может быть довольно длинный текст для проверки прокрутки и производительности списка в Material 3.",
+                        createdAt = createdAt
                     )
                 }
                 
@@ -243,12 +250,15 @@ class SettingsViewModel(
 
                 // Добавляем 50 цитат
                 for (i in 1..50) {
+                    val daysAgo = (i - 1) % 7
+                    val createdAt = now - (daysAgo * dayMillis) - (i * 90_000L)
                     quotesRepository.addQuote(
                         text = quotes[i % quotes.size] + " (Вариант #$i)",
-                        author = authors[i % authors.size]
+                        author = authors[i % authors.size],
+                        createdAt = createdAt
                     )
                 }
-                _uiState.value = _uiState.value.copy(message = "Добавлено по 50 тестовых записей")
+                _uiState.value = _uiState.value.copy(message = "Добавлено по 50 тестовых записей за последние 7 дней")
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(error = "Ошибка при добавлении: ${e.message}")
             }
