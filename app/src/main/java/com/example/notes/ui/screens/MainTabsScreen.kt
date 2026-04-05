@@ -20,8 +20,8 @@ import com.example.notes.data.local.entities.Note
 import com.example.notes.data.local.entities.Quote
 import com.example.notes.ui.viewmodel.NotesViewModel
 import com.example.notes.ui.viewmodel.QuotesViewModel
-
 import androidx.compose.runtime.saveable.rememberSaveable
+import com.example.notes.util.formatShortDate
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -56,6 +56,10 @@ fun MainTabsScreen(
     
     val notesSearchQuery by notesViewModel.searchQuery.collectAsState()
     val quotesSearchQuery by quotesViewModel.searchQuery.collectAsState()
+    val selectedNotesDate by notesViewModel.selectedDateMillis.collectAsState()
+    val selectedQuotesDate by quotesViewModel.selectedDateMillis.collectAsState()
+    val selectedDate = if (selectedTab == 0) selectedNotesDate else selectedQuotesDate
+    var showDatePicker by remember { mutableStateOf(false) }
 
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
 
@@ -105,11 +109,35 @@ fun MainTabsScreen(
             } else {
                 TopAppBar(
                     title = {
-                        Text(if (selectedTab == 0) "Заметки" else "Цитаты")
+                        if (selectedDate != null) {
+                            Text("${if (selectedTab == 0) "Заметки" else "Цитаты"} • ${selectedDate.formatShortDate()}")
+                        } else {
+                            Text(if (selectedTab == 0) "Заметки" else "Цитаты")
+                        }
                     },
                     actions = {
                         IconButton(onClick = { isSearchActive = true }) {
                             Icon(Icons.Default.Search, contentDescription = "Поиск")
+                        }
+                        IconButton(onClick = { showDatePicker = true }) {
+                            Icon(
+                                imageVector = Icons.Default.DateRange,
+                                contentDescription = "Фильтр по дате",
+                                tint = if (selectedDate != null) MaterialTheme.colorScheme.primary else LocalContentColor.current
+                            )
+                        }
+                        if (selectedDate != null) {
+                            IconButton(
+                                onClick = {
+                                    if (selectedTab == 0) {
+                                        notesViewModel.setSelectedDate(null)
+                                    } else {
+                                        quotesViewModel.setSelectedDate(null)
+                                    }
+                                }
+                            ) {
+                                Icon(Icons.Default.Close, contentDescription = "Сбросить фильтр по дате")
+                            }
                         }
                         IconButton(onClick = onSettingsClick) {
                             Icon(Icons.Default.Settings, contentDescription = "Настройки")
@@ -161,6 +189,37 @@ fun MainTabsScreen(
                     lazyListState = quotesLazyListState
                 )
             }
+        }
+    }
+
+    if (showDatePicker) {
+        val datePickerState = rememberDatePickerState(
+            initialSelectedDateMillis = selectedDate
+        )
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        val pickedDate = datePickerState.selectedDateMillis
+                        if (selectedTab == 0) {
+                            notesViewModel.setSelectedDate(pickedDate)
+                        } else {
+                            quotesViewModel.setSelectedDate(pickedDate)
+                        }
+                        showDatePicker = false
+                    }
+                ) {
+                    Text("Выбрать")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDatePicker = false }) {
+                    Text("Отмена")
+                }
+            }
+        ) {
+            DatePicker(state = datePickerState)
         }
     }
 
