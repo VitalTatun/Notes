@@ -28,11 +28,13 @@ fun SettingsScreen(
     val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
     var showDeleteConfirmDialog by remember { mutableStateOf(false) }
+    var showImportModeDialog by remember { mutableStateOf(false) }
+    var importReplaceMode by remember { mutableStateOf(false) }
     
     val importLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument()
     ) { uri ->
-        uri?.let { viewModel.importData(context, it, replace = false) }
+        uri?.let { viewModel.importData(context, it, replace = importReplaceMode) }
     }
 
     LaunchedEffect(uiState.message, uiState.error) {
@@ -72,6 +74,34 @@ fun SettingsScreen(
             ThemeOption("Темная", "DARK", uiState.themeMode) { viewModel.setThemeMode(it) }
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
+            SettingsSectionTitle("Размер шрифта")
+            SettingsSwitchItem(
+                title = "Использовать системный размер",
+                checked = uiState.useSystemFontSize,
+                onCheckedChange = { viewModel.setUseSystemFontSize(it) }
+            )
+            
+            if (!uiState.useSystemFontSize) {
+                Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text("Меньше", style = MaterialTheme.typography.bodySmall)
+                        Text("Масштаб: ${(uiState.fontScale * 100).toInt()}%", style = MaterialTheme.typography.bodyMedium)
+                        Text("Больше", style = MaterialTheme.typography.bodySmall)
+                    }
+                    Slider(
+                        value = uiState.fontScale,
+                        onValueChange = { viewModel.setFontScale(it) },
+                        valueRange = 0.8f..2.0f,
+                        steps = 11 // (2.0 - 0.8) / 0.1 - 1 = 11 steps for 0.1 increments
+                    )
+                }
+            }
+
+            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
             
             SettingsSectionTitle("Безопасность")
             
@@ -102,7 +132,7 @@ fun SettingsScreen(
             
             SettingsClickableItem(
                 title = "Импорт из файла",
-                onClick = { importLauncher.launch(arrayOf("application/json", "text/plain", "application/octet-stream")) }
+                onClick = { showImportModeDialog = true }
             )
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
@@ -112,6 +142,11 @@ fun SettingsScreen(
             SettingsClickableItem(
                 title = "Удалить все данные",
                 onClick = { showDeleteConfirmDialog = true }
+            )
+
+            SettingsClickableItem(
+                title = "Добавить тестовые данные (50+50)",
+                onClick = { viewModel.addSampleData() }
             )
         }
     }
@@ -140,6 +175,37 @@ fun SettingsScreen(
             }
         )
     }
+
+    if (showImportModeDialog) {
+        AlertDialog(
+            onDismissRequest = { showImportModeDialog = false },
+            title = { Text("Импорт данных") },
+            text = { Text("Выберите, как импортировать данные из файла.") },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        importReplaceMode = false
+                        showImportModeDialog = false
+                        importLauncher.launch(arrayOf("application/json", "text/plain", "application/octet-stream"))
+                    }
+                ) {
+                    Text("Добавить")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        importReplaceMode = true
+                        showImportModeDialog = false
+                        importLauncher.launch(arrayOf("application/json", "text/plain", "application/octet-stream"))
+                    }
+                ) {
+                    Text("Заменить")
+                }
+            }
+        )
+    }
+
     if (uiState.showChangePasswordDialog) {
         PasswordDialog(
             isChange = true,

@@ -15,8 +15,8 @@ class QuotesRepository(private val quoteDao: QuoteDao) {
         quoteDao.insertQuote(quote)
     }
 
-    suspend fun addQuote(text: String, author: String, bookTitle: String = "", createdAt: Long = System.currentTimeMillis()) {
-        val quote = Quote(text = text, author = author, bookTitle = bookTitle, createdAt = createdAt)
+    suspend fun addQuote(text: String, author: String, createdAt: Long = System.currentTimeMillis()) {
+        val quote = Quote(text = text, author = author, createdAt = createdAt)
         quoteDao.insertQuote(quote)
     }
 

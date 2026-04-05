@@ -29,8 +29,14 @@ class MainActivity : FragmentActivity() {
             )
             val startDestination by mainViewModel.startDestination.collectAsState()
             val themeMode by mainViewModel.themeMode.collectAsState("SYSTEM")
+            val fontScale by mainViewModel.fontScale.collectAsState(1.0f)
+            val useSystemFontSize by mainViewModel.useSystemFontSize.collectAsState(true)
             
-            NotesTheme(themeMode = themeMode) {
+            NotesTheme(
+                themeMode = themeMode,
+                fontScale = fontScale,
+                useSystemFontSize = useSystemFontSize
+            ) {
                 if (startDestination != null) {
                     val navController = rememberNavController()
                     
@@ -156,11 +162,11 @@ class MainActivity : FragmentActivity() {
                             if (quoteId == -1L || existingQuote != null) {
                                 QuoteDetailScreen(
                                     quote = existingQuote,
-                                    onSave = { text, author, book ->
+                                    onSave = { text, author ->
                                         if (existingQuote != null) {
-                                            quotesViewModel.updateQuote(existingQuote!!.copy(text = text, author = author, bookTitle = book))
+                                            quotesViewModel.updateQuote(existingQuote!!.copy(text = text, author = author))
                                         } else {
-                                            quotesViewModel.addQuote(text, author, book)
+                                            quotesViewModel.addQuote(text, author)
                                         }
                                         navController.popBackStack()
                                     },

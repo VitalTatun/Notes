@@ -1,13 +1,18 @@
 package com.example.notes.ui.screens
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.notes.data.local.entities.Note
 import com.example.notes.util.formatDate
@@ -21,40 +26,64 @@ fun NoteDetailScreen(
 ) {
     var title by remember { mutableStateOf(note?.title ?: "") }
     var content by remember { mutableStateOf(note?.content ?: "") }
+    
+    val focusRequester = remember { FocusRequester() }
+    val scrollState = rememberScrollState()
+    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
+
+    LaunchedEffect(Unit) {
+        if (note == null) {
+            focusRequester.requestFocus()
+        }
+    }
 
     Scaffold(
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             TopAppBar(
-                title = { Text(if (note == null) "Новая заметка" else "Редактировать") },
+                title = { },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Назад")
                     }
                 },
                 actions = {
-                    IconButton(
-                        onClick = {
-                            if (title.isNotBlank() || content.isNotBlank()) {
+                    if (content.isNotBlank()) {
+                        TextButton(
+                            onClick = {
                                 onSave(title, content)
                             }
+                        ) {
+                            Text("Готово", style = MaterialTheme.typography.labelLarge)
                         }
-                    ) {
-                        Icon(Icons.Default.Save, contentDescription = "Сохранить")
                     }
-                }
+                },
+                scrollBehavior = scrollBehavior,
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    scrolledContainerColor = MaterialTheme.colorScheme.surface,
+                )
             )
         }
     ) { innerPadding ->
         Column(
             modifier = Modifier
                 .padding(innerPadding)
-                .padding(horizontal = 16.dp)
                 .fillMaxSize()
+                .imePadding()
+                .verticalScroll(scrollState)
         ) {
             TextField(
                 value = title,
                 onValueChange = { title = it },
-                placeholder = { Text("Заголовок", style = MaterialTheme.typography.headlineSmall) },
+                placeholder = { 
+                    Text(
+                        "Заголовок", 
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                    ) 
+                },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 colors = TextFieldDefaults.colors(
@@ -64,26 +93,32 @@ fun NoteDetailScreen(
                     focusedIndicatorColor = Color.Transparent,
                     unfocusedIndicatorColor = Color.Transparent,
                 ),
-                textStyle = MaterialTheme.typography.headlineSmall
+                textStyle = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold)
             )
             
             val dateText = note?.createdAt?.formatDate() ?: System.currentTimeMillis().formatDate()
             Text(
                 text = dateText,
-                style = MaterialTheme.typography.labelSmall,
+                style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.outline,
                 modifier = Modifier.padding(horizontal = 16.dp)
             )
             
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(12.dp))
             
             TextField(
                 value = content,
                 onValueChange = { content = it },
-                placeholder = { Text("Текст заметки") },
+                placeholder = { 
+                    Text(
+                        "Текст заметки",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                    ) 
+                },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f),
+                    .focusRequester(focusRequester),
                 colors = TextFieldDefaults.colors(
                     focusedContainerColor = Color.Transparent,
                     unfocusedContainerColor = Color.Transparent,

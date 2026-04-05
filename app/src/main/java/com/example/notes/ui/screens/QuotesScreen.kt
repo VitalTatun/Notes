@@ -4,7 +4,9 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
@@ -23,12 +25,11 @@ import com.example.notes.util.formatDate
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun QuotesScreen(
-    viewModel: QuotesViewModel,
+    quotes: List<Quote>,
     onQuoteClick: (Quote) -> Unit,
-    onDeleteConfirm: (Quote) -> Unit
+    onDeleteConfirm: (Quote) -> Unit,
+    lazyListState: LazyListState = rememberLazyListState()
 ) {
-    val quotes by viewModel.quotes.collectAsState()
-
     Column(modifier = Modifier.fillMaxSize()) {
         if (quotes.isEmpty()) {
             Box(
@@ -40,19 +41,15 @@ fun QuotesScreen(
         } else {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(bottom = 16.dp),
-                verticalArrangement = Arrangement.Top
+                state = lazyListState,
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 items(quotes, key = { it.id }) { quote ->
                     QuoteItem(
                         quote = quote,
                         onClick = { onQuoteClick(quote) },
                         onLongClick = { onDeleteConfirm(quote) }
-                    )
-                    HorizontalDivider(
-                        modifier = Modifier.padding(horizontal = 16.dp),
-                        thickness = 0.5.dp,
-                        color = MaterialTheme.colorScheme.outlineVariant
                     )
                 }
             }
@@ -67,16 +64,19 @@ fun QuoteItem(
     onClick: () -> Unit,
     onLongClick: () -> Unit
 ) {
-    Box(
+    Card(
         modifier = Modifier
             .fillMaxWidth()
             .combinedClickable(
                 onClick = onClick,
                 onLongClick = onLongClick
-            )
-            .padding(16.dp)
+            ),
+        shape = MaterialTheme.shapes.medium,
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+        )
     ) {
-        Column {
+        Column(modifier = Modifier.padding(16.dp)) {
             Text(
                 text = "\"${quote.text}\"",
                 style = MaterialTheme.typography.bodyLarge,
@@ -84,34 +84,26 @@ fun QuoteItem(
                 modifier = Modifier.fillMaxWidth()
             )
             
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(12.dp))
             
-            Text(
-                text = quote.author,
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.Bold,
+            Column(
                 modifier = Modifier.fillMaxWidth(),
-                textAlign = TextAlign.End
-            )
-            
-            if (quote.bookTitle.isNotBlank()) {
+                horizontalAlignment = androidx.compose.ui.Alignment.End
+            ) {
                 Text(
-                    text = quote.bookTitle,
-                    style = MaterialTheme.typography.bodySmall,
-                    fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.fillMaxWidth(),
-                    textAlign = TextAlign.End,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    text = quote.author,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.End
+                )
+
+                Text(
+                    text = quote.createdAt.formatDate(),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.outline,
+                    textAlign = TextAlign.End
                 )
             }
-
-            Text(
-                text = quote.createdAt.formatDate(),
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.outline,
-                modifier = Modifier.fillMaxWidth(),
-                textAlign = TextAlign.End
-            )
         }
     }
 }

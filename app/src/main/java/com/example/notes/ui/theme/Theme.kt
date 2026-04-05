@@ -4,6 +4,7 @@ import android.app.Activity
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
@@ -12,30 +13,58 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 
 private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
+    primary = PrimaryDark,
+    onPrimary = OnPrimaryDark,
+    primaryContainer = PrimaryContainerDark,
+    onPrimaryContainer = OnPrimaryContainerDark,
+    secondary = SecondaryDark,
+    onSecondary = OnSecondaryDark,
+    secondaryContainer = SecondaryContainerDark,
+    onSecondaryContainer = OnSecondaryContainerDark,
+    tertiary = TertiaryDark,
+    onTertiary = OnTertiaryDark,
+    tertiaryContainer = TertiaryContainerDark,
+    onTertiaryContainer = OnTertiaryContainerDark,
+    background = BackgroundDark,
+    onBackground = OnBackgroundDark,
+    surface = SurfaceDark,
+    onSurface = OnSurfaceDark,
+    surfaceVariant = SurfaceVariantDark,
+    onSurfaceVariant = OnSurfaceVariantDark,
+    outline = OutlineDark
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
-
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
-    onPrimary = Color.White,
-    onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
+    primary = PrimaryLight,
+    onPrimary = OnPrimaryLight,
+    primaryContainer = PrimaryContainerLight,
+    onPrimaryContainer = OnPrimaryContainerLight,
+    secondary = SecondaryLight,
+    onSecondary = OnSecondaryLight,
+    secondaryContainer = SecondaryContainerLight,
+    onSecondaryContainer = OnSecondaryContainerLight,
+    tertiary = TertiaryLight,
+    onTertiary = OnTertiaryLight,
+    tertiaryContainer = TertiaryContainerLight,
+    onTertiaryContainer = OnTertiaryContainerLight,
+    error = ErrorLight,
+    onError = OnErrorLight,
+    errorContainer = ErrorContainerLight,
+    onErrorContainer = OnErrorContainerLight,
+    background = BackgroundLight,
+    onBackground = OnBackgroundLight,
+    surface = SurfaceLight,
+    onSurface = OnSurfaceLight,
+    surfaceVariant = SurfaceVariantLight,
+    onSurfaceVariant = OnSurfaceVariantLight,
+    outline = OutlineLight
 )
 
 @Composable
 fun NotesTheme(
     themeMode: String = "SYSTEM",
+    fontScale: Float = 1.0f,
+    useSystemFontSize: Boolean = true,
     // Dynamic color is available on Android 12+
     dynamicColor: Boolean = true,
     content: @Composable () -> Unit
@@ -56,9 +85,30 @@ fun NotesTheme(
         else -> LightColorScheme
     }
 
+    // Применяем масштабирование шрифта
+    val currentTypography = AppTypography
+    val finalFontScale = if (useSystemFontSize) 1.0f else fontScale
+    val scaledTypography = Typography(
+        displayLarge = currentTypography.displayLarge.copy(fontSize = currentTypography.displayLarge.fontSize * finalFontScale),
+        displayMedium = currentTypography.displayMedium.copy(fontSize = currentTypography.displayMedium.fontSize * finalFontScale),
+        displaySmall = currentTypography.displaySmall.copy(fontSize = currentTypography.displaySmall.fontSize * finalFontScale),
+        headlineLarge = currentTypography.headlineLarge.copy(fontSize = currentTypography.headlineLarge.fontSize * finalFontScale),
+        headlineMedium = currentTypography.headlineMedium.copy(fontSize = currentTypography.headlineMedium.fontSize * finalFontScale),
+        headlineSmall = currentTypography.headlineSmall.copy(fontSize = currentTypography.headlineSmall.fontSize * finalFontScale),
+        titleLarge = currentTypography.titleLarge.copy(fontSize = currentTypography.titleLarge.fontSize * finalFontScale),
+        titleMedium = currentTypography.titleMedium.copy(fontSize = currentTypography.titleMedium.fontSize * finalFontScale),
+        titleSmall = currentTypography.titleSmall.copy(fontSize = currentTypography.titleSmall.fontSize * finalFontScale),
+        bodyLarge = currentTypography.bodyLarge.copy(fontSize = currentTypography.bodyLarge.fontSize * finalFontScale),
+        bodyMedium = currentTypography.bodyMedium.copy(fontSize = currentTypography.bodyMedium.fontSize * finalFontScale),
+        bodySmall = currentTypography.bodySmall.copy(fontSize = currentTypography.bodySmall.fontSize * finalFontScale),
+        labelLarge = currentTypography.labelLarge.copy(fontSize = currentTypography.labelLarge.fontSize * finalFontScale),
+        labelMedium = currentTypography.labelMedium.copy(fontSize = currentTypography.labelMedium.fontSize * finalFontScale),
+        labelSmall = currentTypography.labelSmall.copy(fontSize = currentTypography.labelSmall.fontSize * finalFontScale)
+    )
+
     MaterialTheme(
         colorScheme = colorScheme,
-        typography = Typography,
+        typography = scaledTypography,
         content = content
     )
 }

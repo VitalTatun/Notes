@@ -1,5 +1,6 @@
 package com.example.notes.ui.screens
 
+import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -22,8 +23,24 @@ fun LoginScreen(
     onLoginSuccess: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
+    val biometricManager = remember(activity) { BiometricManager.from(activity) }
+    val authenticators = BiometricManager.Authenticators.BIOMETRIC_STRONG
 
     fun showBiometricPrompt() {
+        val biometricStatus = biometricManager.canAuthenticate(authenticators)
+        if (biometricStatus != BiometricManager.BIOMETRIC_SUCCESS) {
+            viewModel.onBiometricUnavailable(
+                when (biometricStatus) {
+                    BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED -> "Отпечаток пальца не настроен на устройстве"
+                    BiometricManager.BIOMETRIC_ERROR_NO_HARDWARE -> "На устройстве нет биометрического датчика"
+                    BiometricManager.BIOMETRIC_ERROR_HW_UNAVAILABLE -> "Биометрия временно недоступна"
+                    else -> "Биометрический вход недоступен"
+                }
+            )
+            return
+        }
+
         val executor = ContextCompat.getMainExecutor(activity)
         val biometricPrompt = BiometricPrompt(activity, executor,
             object : BiometricPrompt.AuthenticationCallback() {
@@ -31,13 +48,23 @@ fun LoginScreen(
                     super.onAuthenticationSucceeded(result)
                     viewModel.onBiometricSuccess()
                 }
+
+                override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
+                    super.onAuthenticationError(errorCode, errString)
+                    if (errorCode != BiometricPrompt.ERROR_NEGATIVE_BUTTON &&
+                        errorCode != BiometricPrompt.ERROR_USER_CANCELED &&
+                        errorCode != BiometricPrompt.ERROR_CANCELED
+                    ) {
+                        viewModel.onBiometricUnavailable(errString.toString())
+                    }
+                }
             })
 
         val promptInfo = BiometricPrompt.PromptInfo.Builder()
             .setTitle("Вход по отпечатку")
             .setSubtitle("Приложите палец к сканеру")
             .setNegativeButtonText("Отмена")
-            .setAllowedAuthenticators(androidx.biometric.BiometricManager.Authenticators.BIOMETRIC_STRONG)
+            .setAllowedAuthenticators(authenticators)
             .build()
 
         biometricPrompt.authenticate(promptInfo)
@@ -51,73 +78,155 @@ fun LoginScreen(
         }
     }
 
-    // Автоматический вызов при входе на экран, если биометрия включена
     LaunchedEffect(uiState.isBiometricEnabled) {
-        if (uiState.isBiometricEnabled) {
+        val canUseBiometric = biometricManager.canAuthenticate(authenticators) == BiometricManager.BIOMETRIC_SUCCESS
+        viewModel.updateBiometricAvailability(canUseBiometric)
+    }
+
+    // Автоматический вызов при входе на экран, если биометрия включена и доступна
+    LaunchedEffect(uiState.isBiometricEnabled, uiState.canUseBiometric) {
+        if (uiState.isBiometricEnabled && uiState.canUseBiometric) {
             showBiometricPrompt()
         }
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Icon(
-            imageVector = Icons.Default.Lock,
-            contentDescription = null,
-            modifier = Modifier.size(64.dp),
-            tint = MaterialTheme.colorScheme.primary
-        )
-        
-        Spacer(modifier = Modifier.height(32.dp))
-        
-        Text("Введите пароль", style = MaterialTheme.typography.headlineMedium)
-        
-        Spacer(modifier = Modifier.height(16.dp))
-        
-        OutlinedTextField(
-            value = uiState.password,
-            onValueChange = { viewModel.onPasswordChanged(it) },
-            label = { Text("Пароль") },
-            visualTransformation = PasswordVisualTransformation(),
-            modifier = Modifier.fillMaxWidth(),
-            isError = uiState.error != null,
-            singleLine = true
-        )
-        
-        if (uiState.error != null) {
-            Text(
-                text = uiState.error!!,
-                color = MaterialTheme.colorScheme.error,
-                style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier.padding(top = 4.dp)
-            )
+    LaunchedEffect(uiState.recoveryMessage, uiState.recoveryError, uiState.biometricMessage) {
+        uiState.recoveryMessage?.let {
+            snackbarHostState.showSnackbar(it)
+            viewModel.clearRecoveryMessage()
         }
-        
-        Spacer(modifier = Modifier.height(24.dp))
-        
-        Button(
-            onClick = { viewModel.login() },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Войти")
+        uiState.biometricMessage?.let {
+            snackbarHostState.showSnackbar(it)
+            viewModel.clearBiometricMessage()
         }
+    }
 
-        Spacer(modifier = Modifier.height(16.dp))
-
-        IconButton(
-            onClick = { showBiometricPrompt() },
-            modifier = Modifier.size(48.dp)
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) }
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
         ) {
             Icon(
-                imageVector = Icons.Default.Fingerprint,
-                contentDescription = "Вход по отпечатку",
-                modifier = Modifier.size(40.dp),
+                imageVector = Icons.Default.Lock,
+                contentDescription = null,
+                modifier = Modifier.size(64.dp),
                 tint = MaterialTheme.colorScheme.primary
             )
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            Text("Введите пароль", style = MaterialTheme.typography.headlineMedium)
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            OutlinedTextField(
+                value = uiState.password,
+                onValueChange = { viewModel.onPasswordChanged(it) },
+                label = { Text("Пароль") },
+                visualTransformation = PasswordVisualTransformation(),
+                modifier = Modifier.fillMaxWidth(),
+                isError = uiState.error != null,
+                singleLine = true
+            )
+
+            if (uiState.error != null) {
+                Text(
+                    text = uiState.error!!,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(top = 4.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Button(
+                onClick = { viewModel.login() },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Войти")
+            }
+
+            TextButton(onClick = { viewModel.toggleRecoveryDialog(true) }) {
+                Text("Забыли пароль?")
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            if (uiState.isBiometricEnabled && uiState.canUseBiometric) {
+                IconButton(
+                    onClick = { showBiometricPrompt() },
+                    modifier = Modifier.size(48.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Fingerprint,
+                        contentDescription = "Вход по отпечатку",
+                        modifier = Modifier.size(40.dp),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
         }
+    }
+
+    if (uiState.showRecoveryDialog) {
+        AlertDialog(
+            onDismissRequest = { viewModel.toggleRecoveryDialog(false) },
+            title = { Text("Восстановление пароля") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        text = uiState.securityQuestion ?: "Контрольный вопрос не задан",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    OutlinedTextField(
+                        value = uiState.recoveryAnswer,
+                        onValueChange = { viewModel.onRecoveryAnswerChanged(it) },
+                        label = { Text("Ответ") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    OutlinedTextField(
+                        value = uiState.newPassword,
+                        onValueChange = { viewModel.onNewPasswordChanged(it) },
+                        label = { Text("Новый пароль") },
+                        visualTransformation = PasswordVisualTransformation(),
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    OutlinedTextField(
+                        value = uiState.confirmNewPassword,
+                        onValueChange = { viewModel.onConfirmNewPasswordChanged(it) },
+                        label = { Text("Подтвердите пароль") },
+                        visualTransformation = PasswordVisualTransformation(),
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    if (uiState.recoveryError != null) {
+                        Text(
+                            text = uiState.recoveryError!!,
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                Button(onClick = { viewModel.recoverPassword() }) {
+                    Text("Восстановить")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { viewModel.toggleRecoveryDialog(false) }) {
+                    Text("Отмена")
+                }
+            }
+        )
     }
 }

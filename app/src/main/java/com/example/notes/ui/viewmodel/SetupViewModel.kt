@@ -52,9 +52,9 @@ class SetupViewModel(private val repository: UserPreferencesRepository) : ViewMo
 
         viewModelScope.launch {
             repository.updatePassword(
-                hash = SecurityUtils.hashString(state.password),
+                hash = SecurityUtils.createHash(state.password),
                 question = state.securityQuestion,
-                answerHash = SecurityUtils.hashString(state.securityAnswer)
+                answerHash = SecurityUtils.createHash(state.securityAnswer)
             )
             repository.setBiometricEnabled(state.isBiometricEnabled)
             _uiState.value = state.copy(isSaved = true)

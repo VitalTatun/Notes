@@ -1,6 +1,7 @@
 package com.example.notes.ui.screens
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Notes
 import androidx.compose.material.icons.filled.*
@@ -10,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.platform.LocalClipboardManager
@@ -34,6 +36,13 @@ fun MainTabsScreen(
     onSettingsClick: () -> Unit
 ) {
     var selectedTab by rememberSaveable { mutableIntStateOf(initialTab) }
+    
+    val notesLazyListState = rememberLazyListState()
+    val quotesLazyListState = rememberLazyListState()
+    
+    val notes by notesViewModel.notes.collectAsState()
+    val quotes by quotesViewModel.quotes.collectAsState()
+
     var noteToDelete by remember { mutableStateOf<Note?>(null) }
     var quoteToDelete by remember { mutableStateOf<Quote?>(null) }
     
@@ -48,6 +57,8 @@ fun MainTabsScreen(
     val notesSearchQuery by notesViewModel.searchQuery.collectAsState()
     val quotesSearchQuery by quotesViewModel.searchQuery.collectAsState()
 
+    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
+
     LaunchedEffect(isSearchActive) {
         if (isSearchActive) {
             focusRequester.requestFocus()
@@ -55,10 +66,11 @@ fun MainTabsScreen(
     }
 
     Scaffold(
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
-            TopAppBar(
-                title = {
-                    if (isSearchActive) {
+            if (isSearchActive) {
+                TopAppBar(
+                    title = {
                         TextField(
                             value = if (selectedTab == 0) notesSearchQuery else quotesSearchQuery,
                             onValueChange = {
@@ -79,12 +91,8 @@ fun MainTabsScreen(
                             textStyle = TextStyle(fontSize = 18.sp),
                             singleLine = true
                         )
-                    } else {
-                        Text(if (selectedTab == 0) "Заметки" else "Цитаты")
-                    }
-                },
-                actions = {
-                    if (isSearchActive) {
+                    },
+                    actions = {
                         IconButton(onClick = { 
                             isSearchActive = false
                             notesViewModel.onSearchQueryChange("")
@@ -92,16 +100,24 @@ fun MainTabsScreen(
                         }) {
                             Icon(Icons.Default.Close, contentDescription = "Закрыть поиск")
                         }
-                    } else {
+                    }
+                )
+            } else {
+                TopAppBar(
+                    title = {
+                        Text(if (selectedTab == 0) "Заметки" else "Цитаты")
+                    },
+                    actions = {
                         IconButton(onClick = { isSearchActive = true }) {
                             Icon(Icons.Default.Search, contentDescription = "Поиск")
                         }
                         IconButton(onClick = onSettingsClick) {
                             Icon(Icons.Default.Settings, contentDescription = "Настройки")
                         }
-                    }
-                }
-            )
+                    },
+                    scrollBehavior = scrollBehavior
+                )
+            }
         },
         bottomBar = {
             NavigationBar {
@@ -120,9 +136,11 @@ fun MainTabsScreen(
             }
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = {
-                if (selectedTab == 0) onAddNote() else onAddQuote()
-            }) {
+            FloatingActionButton(
+                onClick = {
+                    if (selectedTab == 0) onAddNote() else onAddQuote()
+                }
+            ) {
                 Icon(Icons.Default.Add, contentDescription = "Добавить")
             }
         }
@@ -130,15 +148,17 @@ fun MainTabsScreen(
         Surface(modifier = Modifier.padding(innerPadding)) {
             if (selectedTab == 0) {
                 NotesScreen(
-                    viewModel = notesViewModel,
+                    notes = notes,
                     onNoteClick = onNoteClick,
-                    onDeleteConfirm = { noteToOptions = it }
+                    onDeleteConfirm = { noteToOptions = it },
+                    lazyListState = notesLazyListState
                 )
             } else {
                 QuotesScreen(
-                    viewModel = quotesViewModel,
+                    quotes = quotes,
                     onQuoteClick = onQuoteClick,
-                    onDeleteConfirm = { quoteToOptions = it }
+                    onDeleteConfirm = { quoteToOptions = it },
+                    lazyListState = quotesLazyListState
                 )
             }
         }
@@ -179,7 +199,7 @@ fun MainTabsScreen(
             onDismissRequest = { quoteToOptions = null },
             title = { Text("Выберите действие") },
             confirmButton = {
-                val textToCopy = "\"${quoteToOptions!!.text}\"\n— ${quoteToOptions!!.author}${if (quoteToOptions!!.bookTitle.isNotBlank()) " (${quoteToOptions!!.bookTitle})" else ""}"
+                val textToCopy = "\"${quoteToOptions!!.text}\"\n— ${quoteToOptions!!.author}"
                 TextButton(onClick = {
                     clipboardManager.setText(AnnotatedString(textToCopy))
                     quoteToOptions = null

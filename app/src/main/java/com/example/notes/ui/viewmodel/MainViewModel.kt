@@ -18,6 +18,8 @@ class MainViewModel(private val repository: UserPreferencesRepository) : ViewMod
     val startDestination: StateFlow<String?> = _startDestination.asStateFlow()
 
     val themeMode: Flow<String> = repository.userPreferencesFlow.map { it.themeMode }
+    val fontScale: Flow<Float> = repository.userPreferencesFlow.map { it.fontScale }
+    val useSystemFontSize: Flow<Boolean> = repository.userPreferencesFlow.map { it.useSystemFontSize }
 
     init {
         viewModelScope.launch {

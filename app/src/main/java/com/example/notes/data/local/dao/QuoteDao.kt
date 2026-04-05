@@ -9,7 +9,7 @@ interface QuoteDao {
     @Query("SELECT * FROM quotes ORDER BY createdAt DESC")
     fun getAllQuotes(): Flow<List<Quote>>
 
-    @Query("SELECT * FROM quotes WHERE text LIKE '%' || :query || '%' OR author LIKE '%' || :query || '%' OR bookTitle LIKE '%' || :query || '%' ORDER BY createdAt DESC")
+    @Query("SELECT * FROM quotes WHERE text LIKE '%' || :query || '%' OR author LIKE '%' || :query || '%' ORDER BY createdAt DESC")
     fun searchQuotes(query: String): Flow<List<Quote>>
 
     @Query("SELECT * FROM quotes WHERE id = :id")

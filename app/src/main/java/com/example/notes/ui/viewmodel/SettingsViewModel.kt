@@ -26,6 +26,8 @@ data class SettingsUiState(
     val themeMode: String = "SYSTEM",
     val isBiometricEnabled: Boolean = false,
     val hasPassword: Boolean = false,
+    val fontScale: Float = 1.0f,
+    val useSystemFontSize: Boolean = true,
     val showChangePasswordDialog: Boolean = false,
     val showSetPasswordDialog: Boolean = false,
     val error: String? = null,
@@ -47,7 +49,9 @@ class SettingsViewModel(
                 _uiState.value = _uiState.value.copy(
                     themeMode = prefs.themeMode,
                     isBiometricEnabled = prefs.isBiometricEnabled,
-                    hasPassword = prefs.passwordHash != null
+                    hasPassword = prefs.passwordHash != null,
+                    fontScale = prefs.fontScale,
+                    useSystemFontSize = prefs.useSystemFontSize
                 )
             }
         }
@@ -56,6 +60,18 @@ class SettingsViewModel(
     fun setThemeMode(mode: String) {
         viewModelScope.launch {
             prefsRepository.setThemeMode(mode)
+        }
+    }
+
+    fun setFontScale(scale: Float) {
+        viewModelScope.launch {
+            prefsRepository.setFontScale(scale)
+        }
+    }
+
+    fun setUseSystemFontSize(useSystem: Boolean) {
+        viewModelScope.launch {
+            prefsRepository.setUseSystemFontSize(useSystem)
         }
     }
 
@@ -69,16 +85,16 @@ class SettingsViewModel(
         viewModelScope.launch {
             val prefs = prefsRepository.userPreferencesFlow.first()
             if (prefs.passwordHash != null && oldPassword != null) {
-                if (SecurityUtils.hashString(oldPassword) != prefs.passwordHash) {
+                if (!SecurityUtils.verifyHash(oldPassword, prefs.passwordHash)) {
                     _uiState.value = _uiState.value.copy(error = "Неверный старый пароль")
                     return@launch
                 }
             }
             
             prefsRepository.updatePassword(
-                hash = SecurityUtils.hashString(newPassword),
+                hash = SecurityUtils.createHash(newPassword),
                 question = question,
-                answerHash = SecurityUtils.hashString(answer)
+                answerHash = SecurityUtils.createHash(answer)
             )
             _uiState.value = _uiState.value.copy(
                 message = "Пароль успешно обновлен",
@@ -122,7 +138,6 @@ class SettingsViewModel(
                     quotesArray.put(JSONObject().apply {
                         put("text", quote.text)
                         put("author", quote.author)
-                        put("book", quote.bookTitle)
                         put("createdAt", quote.createdAt)
                     })
                 }
@@ -170,7 +185,8 @@ class SettingsViewModel(
                 val root = JSONObject(stringBuilder.toString())
                 
                 if (replace) {
-                    // Очистка БД (нужно добавить методы в репозитории)
+                    notesRepository.deleteAllNotes()
+                    quotesRepository.deleteAllQuotes()
                 }
                 
                 val notesArray = root.optJSONArray("notes")
@@ -192,7 +208,6 @@ class SettingsViewModel(
                         quotesRepository.addQuote(
                             text = obj.getString("text"),
                             author = obj.getString("author"),
-                            bookTitle = obj.optString("book", ""),
                             createdAt = obj.optLong("createdAt", System.currentTimeMillis())
                         )
                     }
@@ -201,6 +216,41 @@ class SettingsViewModel(
                 _uiState.value = _uiState.value.copy(message = "Импорт завершен успешно")
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(error = "Ошибка импорта: ${e.message}")
+            }
+        }
+    }
+
+    fun addSampleData() {
+        viewModelScope.launch {
+            try {
+                // Добавляем 50 заметок
+                for (i in 1..50) {
+                    notesRepository.addNote(
+                        title = "Заметка #$i",
+                        content = "Это содержание тестовой заметки номер $i. Здесь может быть довольно длинный текст для проверки прокрутки и производительности списка в Material 3."
+                    )
+                }
+                
+                // Список авторов и цитат для разнообразия
+                val authors = listOf("Марк Твен", "Альберт Эйнштейн", "Стив Джобс", "Оскар Уайльд", "Лев Толстой")
+                val quotes = listOf(
+                    "Единственный способ делать великие дела — любить то, что вы делаете.",
+                    "Воображение важнее, чем знания.",
+                    "Будь собой, все остальные роли уже заняты.",
+                    "Все счастливые семьи похожи друг на друга, каждая несчастливая семья несчастлива по-своему.",
+                    "Слухи о моей смерти несколько преувеличены."
+                )
+
+                // Добавляем 50 цитат
+                for (i in 1..50) {
+                    quotesRepository.addQuote(
+                        text = quotes[i % quotes.size] + " (Вариант #$i)",
+                        author = authors[i % authors.size]
+                    )
+                }
+                _uiState.value = _uiState.value.copy(message = "Добавлено по 50 тестовых записей")
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(error = "Ошибка при добавлении: ${e.message}")
             }
         }
     }

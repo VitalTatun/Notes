@@ -4,28 +4,26 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Search
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.notes.data.local.entities.Note
-import com.example.notes.ui.viewmodel.NotesViewModel
 import com.example.notes.util.formatDate
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NotesScreen(
-    viewModel: NotesViewModel,
+    notes: List<Note>,
     onNoteClick: (Note) -> Unit,
-    onDeleteConfirm: (Note) -> Unit
+    onDeleteConfirm: (Note) -> Unit,
+    lazyListState: LazyListState = rememberLazyListState()
 ) {
-    val notes by viewModel.notes.collectAsState()
-
     Column(modifier = Modifier.fillMaxSize()) {
         if (notes.isEmpty()) {
             Box(
@@ -37,20 +35,21 @@ fun NotesScreen(
         } else {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(bottom = 16.dp),
-                verticalArrangement = Arrangement.Top
+                state = lazyListState,
+                contentPadding = PaddingValues(vertical = 8.dp)
             ) {
                 items(notes, key = { it.id }) { note ->
-                    NoteItem(
-                        note = note,
-                        onClick = { onNoteClick(note) },
-                        onLongClick = { onDeleteConfirm(note) }
-                    )
-                    HorizontalDivider(
-                        modifier = Modifier.padding(horizontal = 16.dp),
-                        thickness = 0.5.dp,
-                        color = MaterialTheme.colorScheme.outlineVariant
-                    )
+                    Column {
+                        NoteItem(
+                            note = note,
+                            onClick = { onNoteClick(note) },
+                            onLongClick = { onDeleteConfirm(note) }
+                        )
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 16.dp),
+                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                        )
+                    }
                 }
             }
         }
@@ -64,46 +63,36 @@ fun NoteItem(
     onClick: () -> Unit,
     onLongClick: () -> Unit
 ) {
-    Box(
+    Column(
         modifier = Modifier
             .fillMaxWidth()
             .combinedClickable(
                 onClick = onClick,
                 onLongClick = onLongClick
             )
-            .padding(16.dp)
+            .padding(horizontal = 16.dp, vertical = 12.dp)
     ) {
-        Column {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                if (note.title.isNotBlank()) {
-                    Text(
-                        text = note.title,
-                        style = MaterialTheme.typography.titleMedium,
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-                Text(
-                    text = note.createdAt.formatDate(),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.outline
-                )
-            }
-            if (note.content.isNotBlank()) {
-                if (note.title.isNotBlank()) {
-                    Spacer(modifier = Modifier.height(4.dp))
-                }
-                Text(
-                    text = note.content,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 3,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
+        if (note.title.isNotBlank()) {
+            Text(
+                text = note.title,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+        }
+
+        Text(
+            text = note.createdAt.formatDate(),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.outline
+        )
+
+        if (note.content.isNotBlank()) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = note.content,
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
     }
 }

@@ -31,9 +31,9 @@ class QuotesViewModel(private val repository: QuotesRepository) : ViewModel() {
         _searchQuery.value = newQuery
     }
 
-    fun addQuote(text: String, author: String, bookTitle: String) {
+    fun addQuote(text: String, author: String) {
         viewModelScope.launch {
-            repository.insertQuote(Quote(text = text, author = author, bookTitle = bookTitle))
+            repository.insertQuote(Quote(text = text, author = author))
         }
     }
 

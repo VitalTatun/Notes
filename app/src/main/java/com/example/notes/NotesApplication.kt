@@ -14,7 +14,9 @@ class NotesApplication : Application() {
             this,
             AppDatabase::class.java,
             "notes_database"
-        ).build()
+        )
+            .addMigrations(AppDatabase.MIGRATION_2_3)
+            .build()
     }
 
     val userPreferencesRepository: UserPreferencesRepository by lazy {

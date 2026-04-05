@@ -3,8 +3,8 @@ package com.example.notes.util
 import java.text.SimpleDateFormat
 import java.util.*
 
+private val dateFormatter = SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.getDefault())
+
 fun Long.formatDate(): String {
-    val date = Date(this)
-    val sdf = SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.getDefault())
-    return sdf.format(date)
+    return dateFormatter.format(Date(this))
 }
