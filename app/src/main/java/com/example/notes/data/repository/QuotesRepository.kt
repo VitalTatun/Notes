@@ -15,6 +15,11 @@ class QuotesRepository(private val quoteDao: QuoteDao) {
         quoteDao.insertQuote(quote)
     }
 
+    suspend fun addQuote(text: String, author: String, bookTitle: String = "") {
+        val quote = Quote(text = text, author = author, bookTitle = bookTitle)
+        quoteDao.insertQuote(quote)
+    }
+
     suspend fun updateQuote(quote: Quote) {
         quoteDao.updateQuote(quote)
     }

@@ -39,6 +39,10 @@ class LoginViewModel(private val repository: UserPreferencesRepository) : ViewMo
         _uiState.value = _uiState.value.copy(isLoggedIn = true)
     }
 
+    fun resetLoginState() {
+        _uiState.value = _uiState.value.copy(isLoggedIn = false, password = "", error = null)
+    }
+
     fun login() {
         viewModelScope.launch {
             val prefs = repository.userPreferencesFlow.first()

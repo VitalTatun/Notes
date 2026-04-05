@@ -1,14 +1,10 @@
 package com.example.notes
 
 import android.os.Bundle
-import androidx.activity.ComponentActivity
+import androidx.fragment.app.FragmentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -21,7 +17,7 @@ import com.example.notes.ui.screens.*
 import com.example.notes.ui.theme.NotesTheme
 import com.example.notes.ui.viewmodel.*
 
-class MainActivity : ComponentActivity() {
+class MainActivity : FragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val app = application as NotesApplication
@@ -32,8 +28,9 @@ class MainActivity : ComponentActivity() {
                 factory = MainViewModel.Factory(app.userPreferencesRepository)
             )
             val startDestination by mainViewModel.startDestination.collectAsState()
+            val themeMode by mainViewModel.themeMode.collectAsState("SYSTEM")
             
-            NotesTheme {
+            NotesTheme(themeMode = themeMode) {
                 if (startDestination != null) {
                     val navController = rememberNavController()
                     NavHost(
@@ -58,6 +55,7 @@ class MainActivity : ComponentActivity() {
                                 factory = LoginViewModel.Factory(app.userPreferencesRepository)
                             )
                             LoginScreen(
+                                activity = this@MainActivity,
                                 viewModel = loginViewModel,
                                 onLoginSuccess = {
                                     navController.navigate("main_notes") {
@@ -97,7 +95,23 @@ class MainActivity : ComponentActivity() {
                                 },
                                 onAddQuote = {
                                     navController.navigate("quote_detail")
+                                },
+                                onSettingsClick = {
+                                    navController.navigate("settings")
                                 }
+                            )
+                        }
+                        composable("settings") {
+                            val settingsViewModel: SettingsViewModel = viewModel(
+                                factory = SettingsViewModel.Factory(
+                                    app.userPreferencesRepository,
+                                    app.notesRepository,
+                                    app.quotesRepository
+                                )
+                            )
+                            SettingsScreen(
+                                viewModel = settingsViewModel,
+                                onBack = { navController.popBackStack() }
                             )
                         }
                         composable(

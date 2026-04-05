@@ -31,6 +31,10 @@ class SetupViewModel(private val repository: UserPreferencesRepository) : ViewMo
         _uiState.value = _uiState.value.copy(securityAnswer = answer)
     }
 
+    fun onBiometricToggled(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(isBiometricEnabled = enabled)
+    }
+
     fun savePassword() {
         val state = _uiState.value
         if (state.password.length < 4) {
@@ -52,6 +56,7 @@ class SetupViewModel(private val repository: UserPreferencesRepository) : ViewMo
                 question = state.securityQuestion,
                 answerHash = SecurityUtils.hashString(state.securityAnswer)
             )
+            repository.setBiometricEnabled(state.isBiometricEnabled)
             _uiState.value = state.copy(isSaved = true)
         }
     }
@@ -75,6 +80,7 @@ data class SetupUiState(
     val confirmPassword: String = "",
     val securityQuestion: String = "",
     val securityAnswer: String = "",
+    val isBiometricEnabled: Boolean = true,
     val error: String? = null,
     val isSaved: Boolean = false,
     val isSkipped: Boolean = false

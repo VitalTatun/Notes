@@ -89,25 +89,15 @@ fun QuoteItem(
             .padding(16.dp)
     ) {
         Column {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.Top
-            ) {
-                Text(
-                    text = "\"${quote.text}\"",
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontStyle = FontStyle.Italic,
-                    modifier = Modifier.weight(1f)
-                )
-                Text(
-                    text = quote.createdAt.formatDate(),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.outline,
-                    modifier = Modifier.padding(start = 8.dp)
-                )
-            }
+            Text(
+                text = "\"${quote.text}\"",
+                style = MaterialTheme.typography.bodyLarge,
+                fontStyle = FontStyle.Italic,
+                modifier = Modifier.fillMaxWidth()
+            )
+            
             Spacer(modifier = Modifier.height(8.dp))
+            
             Text(
                 text = quote.author,
                 style = MaterialTheme.typography.titleSmall,
@@ -115,6 +105,7 @@ fun QuoteItem(
                 modifier = Modifier.fillMaxWidth(),
                 textAlign = TextAlign.End
             )
+            
             if (quote.bookTitle.isNotBlank()) {
                 Text(
                     text = quote.bookTitle,
@@ -125,6 +116,14 @@ fun QuoteItem(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
+
+            Text(
+                text = quote.createdAt.formatDate(),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.outline,
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.End
+            )
         }
     }
 }

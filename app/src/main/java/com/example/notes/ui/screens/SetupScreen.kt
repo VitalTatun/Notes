@@ -75,8 +75,24 @@ fun SetupScreen(
             value = uiState.securityAnswer,
             onValueChange = { viewModel.onAnswerChanged(it) },
             label = { Text("Ответ") },
-            modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp)
+            modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
         )
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 24.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Использовать отпечаток пальца",
+                modifier = Modifier.weight(1f)
+            )
+            Switch(
+                checked = uiState.isBiometricEnabled,
+                onCheckedChange = { viewModel.onBiometricToggled(it) }
+            )
+        }
 
         if (uiState.error != null) {
             Text(

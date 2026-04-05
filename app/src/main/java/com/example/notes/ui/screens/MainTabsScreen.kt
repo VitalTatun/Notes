@@ -3,6 +3,7 @@ package com.example.notes.ui.screens
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Notes
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.FormatQuote
 import androidx.compose.material3.*
@@ -24,7 +25,8 @@ fun MainTabsScreen(
     onNoteClick: (Note) -> Unit,
     onQuoteClick: (Quote) -> Unit,
     onAddNote: () -> Unit,
-    onAddQuote: () -> Unit
+    onAddQuote: () -> Unit,
+    onSettingsClick: () -> Unit
 ) {
     var selectedTab by rememberSaveable { mutableIntStateOf(initialTab) }
     var noteToDelete by remember { mutableStateOf<Note?>(null) }
@@ -32,7 +34,14 @@ fun MainTabsScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text(if (selectedTab == 0) "Заметки" else "Цитаты") })
+            TopAppBar(
+                title = { Text(if (selectedTab == 0) "Заметки" else "Цитаты") },
+                actions = {
+                    IconButton(onClick = onSettingsClick) {
+                        Icon(Icons.Default.Settings, contentDescription = "Настройки")
+                    }
+                }
+            )
         },
         bottomBar = {
             NavigationBar {
