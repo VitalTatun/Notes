@@ -27,6 +27,7 @@ data class SettingsUiState(
     val themeMode: String = "SYSTEM",
     val isBiometricEnabled: Boolean = false,
     val hasPassword: Boolean = false,
+    val securityQuestion: String? = null,
     val fontScale: Float = 1.0f,
     val useSystemFontSize: Boolean = true,
     val showChangePasswordDialog: Boolean = false,
@@ -51,6 +52,7 @@ class SettingsViewModel(
                     themeMode = prefs.themeMode,
                     isBiometricEnabled = prefs.isBiometricEnabled,
                     hasPassword = prefs.passwordHash != null,
+                    securityQuestion = prefs.securityQuestion,
                     fontScale = prefs.fontScale,
                     useSystemFontSize = prefs.useSystemFontSize
                 )
@@ -85,11 +87,28 @@ class SettingsViewModel(
     fun updatePassword(oldPassword: String?, newPassword: String, question: String, answer: String) {
         viewModelScope.launch {
             val prefs = prefsRepository.userPreferencesFlow.first()
+
+            if (prefs.passwordHash != null && oldPassword.isNullOrBlank()) {
+                _uiState.value = _uiState.value.copy(error = "Введите старый пароль")
+                return@launch
+            }
             if (prefs.passwordHash != null && oldPassword != null) {
                 if (!SecurityUtils.verifyHash(oldPassword, prefs.passwordHash)) {
                     _uiState.value = _uiState.value.copy(error = "Неверный старый пароль")
                     return@launch
                 }
+            }
+            if (newPassword.length < 4) {
+                _uiState.value = _uiState.value.copy(error = "Пароль слишком короткий (мин. 4 символа)")
+                return@launch
+            }
+            if (question.isBlank()) {
+                _uiState.value = _uiState.value.copy(error = "Введите контрольный вопрос")
+                return@launch
+            }
+            if (answer.isBlank()) {
+                _uiState.value = _uiState.value.copy(error = "Введите ответ на контрольный вопрос")
+                return@launch
             }
             
             prefsRepository.updatePassword(

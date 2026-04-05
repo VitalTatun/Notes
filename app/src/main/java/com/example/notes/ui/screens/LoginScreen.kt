@@ -6,10 +6,13 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Fingerprint
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
@@ -26,6 +29,9 @@ fun LoginScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val biometricManager = remember(activity) { BiometricManager.from(activity) }
     val authenticators = BiometricManager.Authenticators.BIOMETRIC_STRONG
+    var isPasswordVisible by remember { mutableStateOf(false) }
+    var isRecoveryPasswordVisible by remember { mutableStateOf(false) }
+    var isRecoveryConfirmPasswordVisible by remember { mutableStateOf(false) }
 
     fun showBiometricPrompt() {
         val biometricStatus = biometricManager.canAuthenticate(authenticators)
@@ -129,7 +135,15 @@ fun LoginScreen(
                 value = uiState.password,
                 onValueChange = { viewModel.onPasswordChanged(it) },
                 label = { Text("Пароль") },
-                visualTransformation = PasswordVisualTransformation(),
+                visualTransformation = if (isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                trailingIcon = {
+                    IconButton(onClick = { isPasswordVisible = !isPasswordVisible }) {
+                        Icon(
+                            imageVector = if (isPasswordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                            contentDescription = if (isPasswordVisible) "Скрыть пароль" else "Показать пароль"
+                        )
+                    }
+                },
                 modifier = Modifier.fillMaxWidth(),
                 isError = uiState.error != null,
                 singleLine = true
@@ -196,7 +210,15 @@ fun LoginScreen(
                         value = uiState.newPassword,
                         onValueChange = { viewModel.onNewPasswordChanged(it) },
                         label = { Text("Новый пароль") },
-                        visualTransformation = PasswordVisualTransformation(),
+                        visualTransformation = if (isRecoveryPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                        trailingIcon = {
+                            IconButton(onClick = { isRecoveryPasswordVisible = !isRecoveryPasswordVisible }) {
+                                Icon(
+                                    imageVector = if (isRecoveryPasswordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                                    contentDescription = if (isRecoveryPasswordVisible) "Скрыть пароль" else "Показать пароль"
+                                )
+                            }
+                        },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -204,7 +226,15 @@ fun LoginScreen(
                         value = uiState.confirmNewPassword,
                         onValueChange = { viewModel.onConfirmNewPasswordChanged(it) },
                         label = { Text("Подтвердите пароль") },
-                        visualTransformation = PasswordVisualTransformation(),
+                        visualTransformation = if (isRecoveryConfirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                        trailingIcon = {
+                            IconButton(onClick = { isRecoveryConfirmPasswordVisible = !isRecoveryConfirmPasswordVisible }) {
+                                Icon(
+                                    imageVector = if (isRecoveryConfirmPasswordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                                    contentDescription = if (isRecoveryConfirmPasswordVisible) "Скрыть пароль" else "Показать пароль"
+                                )
+                            }
+                        },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
