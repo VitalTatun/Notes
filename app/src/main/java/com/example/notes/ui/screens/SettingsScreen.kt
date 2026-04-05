@@ -27,9 +27,10 @@ fun SettingsScreen(
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
+    var showDeleteConfirmDialog by remember { mutableStateOf(false) }
     
     val importLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
+        contract = ActivityResultContracts.OpenDocument()
     ) { uri ->
         uri?.let { viewModel.importData(context, it, replace = false) }
     }
@@ -96,20 +97,49 @@ fun SettingsScreen(
             
             SettingsClickableItem(
                 title = "Экспорт всех записей (JSON)",
-                onClick = { 
-                    val msg = viewModel.exportData(context)
-                    // В полноценной версии здесь был бы ShareIntent или FileSaver
-                }
+                onClick = { viewModel.exportData(context) }
             )
             
             SettingsClickableItem(
                 title = "Импорт из файла",
-                onClick = { importLauncher.launch("application/json") }
+                onClick = { importLauncher.launch(arrayOf("application/json", "text/plain", "application/octet-stream")) }
+            )
+
+            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
+            SettingsSectionTitle("Опасная зона")
+
+            SettingsClickableItem(
+                title = "Удалить все данные",
+                onClick = { showDeleteConfirmDialog = true }
             )
         }
     }
 
     // Диалоги
+    if (showDeleteConfirmDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteConfirmDialog = false },
+            title = { Text("Удалить все данные?") },
+            text = { Text("Это действие нельзя отменить. Все ваши заметки и цитаты будут безвозвратно удалены.") },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        viewModel.deleteAllData()
+                        showDeleteConfirmDialog = false
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                ) {
+                    Text("Удалить")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteConfirmDialog = false }) {
+                    Text("Отмена")
+                }
+            }
+        )
+    }
     if (uiState.showChangePasswordDialog) {
         PasswordDialog(
             isChange = true,

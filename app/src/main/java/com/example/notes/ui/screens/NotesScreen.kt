@@ -25,20 +25,8 @@ fun NotesScreen(
     onDeleteConfirm: (Note) -> Unit
 ) {
     val notes by viewModel.notes.collectAsState()
-    val searchQuery by viewModel.searchQuery.collectAsState()
 
     Column(modifier = Modifier.fillMaxSize()) {
-        OutlinedTextField(
-            value = searchQuery,
-            onValueChange = { viewModel.onSearchQueryChange(it) },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            placeholder = { Text("Поиск заметок...") },
-            leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
-            singleLine = true
-        )
-
         if (notes.isEmpty()) {
             Box(
                 modifier = Modifier.fillMaxSize(),

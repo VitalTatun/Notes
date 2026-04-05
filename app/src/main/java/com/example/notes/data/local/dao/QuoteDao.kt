@@ -23,4 +23,7 @@ interface QuoteDao {
 
     @Update
     suspend fun updateQuote(quote: Quote)
+
+    @Query("DELETE FROM quotes")
+    suspend fun deleteAllQuotes()
 }

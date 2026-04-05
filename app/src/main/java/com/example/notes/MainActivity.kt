@@ -33,6 +33,23 @@ class MainActivity : FragmentActivity() {
             NotesTheme(themeMode = themeMode) {
                 if (startDestination != null) {
                     val navController = rememberNavController()
+                    
+                    LaunchedEffect(intent?.data) {
+                        intent?.data?.let { uri ->
+                            when (uri.toString()) {
+                                "notesapp://add_note" -> {
+                                    navController.navigate("main_notes?tab=0")
+                                    navController.navigate("note_detail")
+                                }
+                                "notesapp://add_quote" -> {
+                                    navController.navigate("main_notes?tab=1")
+                                    navController.navigate("quote_detail")
+                                }
+                            }
+                            intent.data = null // Очищаем, чтобы не срабатывало при повороте
+                        }
+                    }
+
                     NavHost(
                         navController = navController,
                         startDestination = startDestination!!

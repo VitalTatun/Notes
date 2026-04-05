@@ -11,6 +11,7 @@ import com.example.notes.data.repository.NotesRepository
 import com.example.notes.data.repository.QuotesRepository
 import com.example.notes.data.repository.UserPreferencesRepository
 import com.example.notes.util.SecurityUtils
+import com.example.notes.util.ShareUtils
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -100,9 +101,9 @@ class SettingsViewModel(
         _uiState.value = _uiState.value.copy(showSetPasswordDialog = show, error = null)
     }
 
-    fun exportData(context: Context): String {
-        return try {
-            viewModelScope.launch {
+    fun exportData(context: Context) {
+        viewModelScope.launch {
+            try {
                 val notes = notesRepository.allNotes.first()
                 val quotes = quotesRepository.allQuotes.first()
                 
@@ -130,12 +131,25 @@ class SettingsViewModel(
                 root.put("quotes", quotesArray)
                 
                 val jsonString = root.toString(4)
-                // В реальном приложении здесь был бы вызов Save Picker
-                // Но для простоты вернем строку или сохраним во внутренний файл
+                val fileName = "notes_export_${System.currentTimeMillis()}.json"
+                
+                ShareUtils.shareJsonFile(context, jsonString, fileName)
+                _uiState.value = _uiState.value.copy(message = "Данные подготовлены к экспорту")
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(error = "Ошибка экспорта: ${e.message}")
             }
-            "Данные подготовлены к экспорту"
-        } catch (e: Exception) {
-            "Ошибка экспорта: ${e.message}"
+        }
+    }
+
+    fun deleteAllData() {
+        viewModelScope.launch {
+            try {
+                notesRepository.deleteAllNotes()
+                quotesRepository.deleteAllQuotes()
+                _uiState.value = _uiState.value.copy(message = "Все записи удалены")
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(error = "Ошибка при удалении: ${e.message}")
+            }
         }
     }
 
@@ -164,8 +178,9 @@ class SettingsViewModel(
                     for (i in 0 until it.length()) {
                         val obj = it.getJSONObject(i)
                         notesRepository.addNote(
-                            obj.getString("title"),
-                            obj.getString("content")
+                            title = obj.getString("title"),
+                            content = obj.getString("content"),
+                            createdAt = obj.optLong("createdAt", System.currentTimeMillis())
                         )
                     }
                 }
@@ -175,9 +190,10 @@ class SettingsViewModel(
                     for (i in 0 until it.length()) {
                         val obj = it.getJSONObject(i)
                         quotesRepository.addQuote(
-                            obj.getString("text"),
-                            obj.getString("author"),
-                            obj.optString("book", "")
+                            text = obj.getString("text"),
+                            author = obj.getString("author"),
+                            bookTitle = obj.optString("book", ""),
+                            createdAt = obj.optLong("createdAt", System.currentTimeMillis())
                         )
                     }
                 }

@@ -15,8 +15,8 @@ class NotesRepository(private val noteDao: NoteDao) {
         noteDao.insertNote(note)
     }
 
-    suspend fun addNote(title: String, content: String) {
-        val note = Note(title = title, content = content)
+    suspend fun addNote(title: String, content: String, createdAt: Long = System.currentTimeMillis()) {
+        val note = Note(title = title, content = content, createdAt = createdAt)
         noteDao.insertNote(note)
     }
 
@@ -26,5 +26,9 @@ class NotesRepository(private val noteDao: NoteDao) {
 
     suspend fun deleteNote(note: Note) {
         noteDao.deleteNote(note)
+    }
+
+    suspend fun deleteAllNotes() {
+        noteDao.deleteAllNotes()
     }
 }
