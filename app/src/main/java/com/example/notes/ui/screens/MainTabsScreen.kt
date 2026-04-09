@@ -1,34 +1,32 @@
 package com.example.notes.ui.screens
 
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Notes
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.unit.dp
 import com.example.notes.data.local.entities.Note
 import com.example.notes.data.local.entities.Quote
 import com.example.notes.ui.viewmodel.NotesViewModel
 import com.example.notes.ui.viewmodel.QuotesViewModel
-import androidx.compose.runtime.saveable.rememberSaveable
-import com.example.notes.util.formatShortDate
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -43,7 +41,7 @@ fun MainTabsScreen(
     onSettingsClick: () -> Unit
 ) {
     var selectedTab by rememberSaveable { mutableIntStateOf(initialTab) }
-    
+
     val notesLazyListState = rememberLazyListState()
     val quotesLazyListState = rememberLazyListState()
 
@@ -82,20 +80,17 @@ fun MainTabsScreen(
 
     var noteToDelete by remember { mutableStateOf<Note?>(null) }
     var quoteToDelete by remember { mutableStateOf<Quote?>(null) }
-    
+
     val clipboardManager = LocalClipboardManager.current
-    
-    var isSearchActive by rememberSaveable { mutableStateOf(false) }
-    val focusRequester = remember { FocusRequester() }
-    
+    val focusManager = LocalFocusManager.current
+
     val notesSearchQuery by notesViewModel.searchQuery.collectAsState()
     val quotesSearchQuery by quotesViewModel.searchQuery.collectAsState()
+    val activeSearchQuery = if (selectedTab == 0) notesSearchQuery else quotesSearchQuery
     val selectedNotesDate by notesViewModel.selectedDateMillis.collectAsState()
     val selectedQuotesDate by quotesViewModel.selectedDateMillis.collectAsState()
     val selectedDate = if (selectedTab == 0) selectedNotesDate else selectedQuotesDate
     var showDatePicker by remember { mutableStateOf(false) }
-
-    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
     val bottomBarHeight = 80.dp
     val animatedBottomPadding by animateDpAsState(
@@ -108,99 +103,117 @@ fun MainTabsScreen(
         label = "fabOffsetY"
     )
 
-    LaunchedEffect(isSearchActive) {
-        if (isSearchActive) {
-            focusRequester.requestFocus()
-        }
-    }
-
     LaunchedEffect(selectedTab) {
         isExpanded = true
+        focusManager.clearFocus()
+    }
+
+    val searchPlaceholder = if (selectedTab == 0) "Поиск в заметках" else "Поиск в цитатах"
+    val onSearchQueryChange: (String) -> Unit = { query ->
+        if (selectedTab == 0) notesViewModel.onSearchQueryChange(query)
+        else quotesViewModel.onSearchQueryChange(query)
     }
 
     Scaffold(
-        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        topBar = {
-            if (isSearchActive) {
-                TopAppBar(
-                    title = {
-                        TextField(
-                            value = if (selectedTab == 0) notesSearchQuery else quotesSearchQuery,
-                            onValueChange = {
-                                if (selectedTab == 0) notesViewModel.onSearchQueryChange(it)
-                                else quotesViewModel.onSearchQueryChange(it)
-                            },
-                            placeholder = { Text("Поиск...") },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .focusRequester(focusRequester),
-                            colors = TextFieldDefaults.colors(
-                                focusedContainerColor = Color.Transparent,
-                                unfocusedContainerColor = Color.Transparent,
-                                disabledContainerColor = Color.Transparent,
-                                focusedIndicatorColor = Color.Transparent,
-                                unfocusedIndicatorColor = Color.Transparent,
-                            ),
-                            textStyle = TextStyle(fontSize = 18.sp),
-                            singleLine = true
-                        )
-                    },
-                    actions = {
-                        IconButton(onClick = { 
-                            isSearchActive = false
-                        }) {
-                            Icon(Icons.Default.Close, contentDescription = "Закрыть поиск")
-                        }
-                    }
-                )
-            } else {
-                LargeTopAppBar(
-                    title = {
-                        if (selectedDate != null) {
-                            Text("${if (selectedTab == 0) "Заметки" else "Цитаты"} • ${selectedDate.formatShortDate()}")
-                        } else {
-                            Text(if (selectedTab == 0) "Заметки" else "Цитаты")
-                        }
-                    },
-                    actions = {
-                        IconButton(onClick = { isSearchActive = true }) {
-                            Icon(Icons.Default.Search, contentDescription = "Поиск")
-                        }
-                        IconButton(onClick = { showDatePicker = true }) {
-                            Icon(
-                                imageVector = Icons.Default.DateRange,
-                                contentDescription = "Фильтр по дате",
-                                tint = if (selectedDate != null) MaterialTheme.colorScheme.primary else LocalContentColor.current
-                            )
-                        }
-                        if (selectedDate != null) {
-                            IconButton(
-                                onClick = {
-                                    if (selectedTab == 0) {
-                                        notesViewModel.setSelectedDate(null)
-                                    } else {
-                                        quotesViewModel.setSelectedDate(null)
-                                    }
-                                }
-                            ) {
-                                Icon(Icons.Default.Close, contentDescription = "Сбросить фильтр по дате")
-                            }
-                        }
-                        IconButton(onClick = onSettingsClick) {
-                            Icon(Icons.Default.Settings, contentDescription = "Настройки")
-                        }
-                    },
-                    scrollBehavior = scrollBehavior
-                )
-            }
-        },
         bottomBar = {
             // Оставляем пустым, чтобы управлять панелью вручную для плавной анимации
+        },
+        topBar = {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .statusBarsPadding()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                SearchBar(
+                    inputField = {
+                        SearchBarDefaults.InputField(
+                            query = activeSearchQuery,
+                            onQueryChange = onSearchQueryChange,
+                            onSearch = { focusManager.clearFocus() },
+                            expanded = false,
+                            onExpandedChange = {},
+                            placeholder = { Text(searchPlaceholder) },
+                            leadingIcon = {
+                                Icon(Icons.Default.Search, contentDescription = null)
+                            },
+                            trailingIcon = {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    if (activeSearchQuery.isNotBlank()) {
+                                        IconButton(
+                                            onClick = {
+                                                onSearchQueryChange("")
+                                                focusManager.clearFocus()
+                                            }
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.Close,
+                                                contentDescription = "Очистить поиск"
+                                            )
+                                        }
+                                    }
+                                    if (selectedDate != null) {
+                                        IconButton(
+                                            onClick = {
+                                                focusManager.clearFocus()
+                                                if (selectedTab == 0) {
+                                                    notesViewModel.setSelectedDate(null)
+                                                } else {
+                                                    quotesViewModel.setSelectedDate(null)
+                                                }
+                                            }
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.Close,
+                                                contentDescription = "Сбросить фильтр по дате"
+                                            )
+                                        }
+                                    }
+                                    IconButton(
+                                        onClick = {
+                                            focusManager.clearFocus()
+                                            showDatePicker = true
+                                        }
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.DateRange,
+                                            contentDescription = "Фильтр по дате",
+                                            tint = if (selectedDate != null) {
+                                                MaterialTheme.colorScheme.primary
+                                            } else {
+                                                LocalContentColor.current
+                                            }
+                                        )
+                                    }
+                                    IconButton(
+                                        onClick = {
+                                            focusManager.clearFocus()
+                                            onSettingsClick()
+                                        }
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Settings,
+                                            contentDescription = "Настройки"
+                                        )
+                                    }
+                                }
+                            }
+                        )
+                    },
+                    expanded = false,
+                    onExpandedChange = {},
+                    modifier = Modifier.fillMaxWidth()
+                ) {}
+            }
         },
         floatingActionButton = {
             ExtendedFloatingActionButton(
                 modifier = Modifier.offset(y = animatedFabOffsetY),
                 onClick = {
+                    focusManager.clearFocus()
                     if (selectedTab == 0) onAddNote() else onAddQuote()
                 },
                 expanded = isExpanded,
@@ -219,6 +232,9 @@ fun MainTabsScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
+                .pointerInput(Unit) {
+                    detectTapGestures(onTap = { focusManager.clearFocus() })
+                }
                 .padding(top = innerPadding.calculateTopPadding())
         ) {
             Surface(
