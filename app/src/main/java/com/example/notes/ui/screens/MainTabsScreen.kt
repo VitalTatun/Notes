@@ -148,8 +148,6 @@ fun MainTabsScreen(
                     actions = {
                         IconButton(onClick = { 
                             isSearchActive = false
-                            notesViewModel.onSearchQueryChange("")
-                            quotesViewModel.onSearchQueryChange("")
                         }) {
                             Icon(Icons.Default.Close, contentDescription = "Закрыть поиск")
                         }

@@ -6,7 +6,12 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
-import androidx.compose.runtime.*
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -29,7 +34,6 @@ class MainActivity : FragmentActivity() {
             val mainViewModel: MainViewModel = viewModel(
                 factory = MainViewModel.Factory(app.userPreferencesRepository)
             )
-            val startDestination by mainViewModel.startDestination.collectAsState()
             val themeMode by mainViewModel.themeMode.collectAsState("SYSTEM")
             val fontScale by mainViewModel.fontScale.collectAsState(1.0f)
             val useSystemFontSize by mainViewModel.useSystemFontSize.collectAsState(true)
@@ -39,71 +43,36 @@ class MainActivity : FragmentActivity() {
                 fontScale = fontScale,
                 useSystemFontSize = useSystemFontSize
             ) {
-                if (startDestination != null) {
-                    val navController = rememberNavController()
+                val navController = rememberNavController()
 
-                    val currentIntent = intent
-                    LaunchedEffect(currentIntent?.data) {
-                        currentIntent?.data?.let { uri ->
-                            when (uri.toString()) {
-                                "notesapp://add_note" -> {
-                                    navController.navigate("main_notes?tab=0") {
-                                        popUpTo("main_notes") { inclusive = true }
-                                    }
-                                    navController.navigate("note_detail")
-                                }
-                                "notesapp://add_quote" -> {
-                                    navController.navigate("main_notes?tab=1") {
-                                        popUpTo("main_notes") { inclusive = true }
-                                    }
-                                    navController.navigate("quote_detail")
-                                }
-                            }
-                            currentIntent.data = null
-                        }
+                NavHost(
+                    navController = navController,
+                    startDestination = "main_notes",
+                    enterTransition = {
+                        slideInHorizontally(
+                            initialOffsetX = { it },
+                            animationSpec = tween(300)
+                        ) + fadeIn(animationSpec = tween(300))
+                    },
+                    exitTransition = {
+                        slideOutHorizontally(
+                            targetOffsetX = { -it },
+                            animationSpec = tween(300)
+                        ) + fadeOut(animationSpec = tween(300))
+                    },
+                    popEnterTransition = {
+                        slideInHorizontally(
+                            initialOffsetX = { -it },
+                            animationSpec = tween(300)
+                        ) + fadeIn(animationSpec = tween(300))
+                    },
+                    popExitTransition = {
+                        slideOutHorizontally(
+                            targetOffsetX = { it },
+                            animationSpec = tween(300)
+                        ) + fadeOut(animationSpec = tween(300))
                     }
-
-                    NavHost(
-                        navController = navController,
-                        startDestination = startDestination!!,
-                        enterTransition = {
-                            slideInHorizontally(
-                                initialOffsetX = { it },
-                                animationSpec = tween(300)
-                            ) + fadeIn(animationSpec = tween(300))
-                        },
-                        exitTransition = {
-                            slideOutHorizontally(
-                                targetOffsetX = { -it },
-                                animationSpec = tween(300)
-                            ) + fadeOut(animationSpec = tween(300))
-                        },
-                        popEnterTransition = {
-                            slideInHorizontally(
-                                initialOffsetX = { -it },
-                                animationSpec = tween(300)
-                            ) + fadeIn(animationSpec = tween(300))
-                        },
-                        popExitTransition = {
-                            slideOutHorizontally(
-                                targetOffsetX = { it },
-                                animationSpec = tween(300)
-                            ) + fadeOut(animationSpec = tween(300))
-                        }
-                    ) {
-                        composable("setup") {
-                            val setupViewModel: SetupViewModel = viewModel(
-                                factory = SetupViewModel.Factory(app.userPreferencesRepository)
-                            )
-                            SetupScreen(
-                                viewModel = setupViewModel,
-                                onFinish = {
-                                    navController.navigate("main_notes") {
-                                        popUpTo("setup") { inclusive = true }
-                                    }
-                                }
-                            )
-                        }
+                ) {
                         composable(
                             route = "main_notes?tab={tab}",
                             arguments = listOf(
@@ -181,15 +150,19 @@ class MainActivity : FragmentActivity() {
                                     quote = existingQuote,
                                     onSave = { text, author ->
                                         if (existingQuote != null) {
-                                            if (text.isEmpty() && author.isEmpty()) {
-                                                quotesViewModel.deleteQuote(existingQuote!!)
-                                            } else {
-                                                quotesViewModel.updateQuote(existingQuote!!.copy(text = text, author = author))
-                                            }
+                                            quotesViewModel.updateQuote(existingQuote!!.copy(text = text, author = author))
                                         } else {
                                             quotesViewModel.addQuote(text, author)
                                         }
                                         navController.popBackStack()
+                                    },
+                                    onDelete = if (existingQuote != null) {
+                                        {
+                                            quotesViewModel.deleteQuote(existingQuote!!)
+                                            navController.popBackStack()
+                                        }
+                                    } else {
+                                        null
                                     },
                                     onBack = { navController.popBackStack() }
                                 )
@@ -222,23 +195,26 @@ class MainActivity : FragmentActivity() {
                                     note = existingNote,
                                     onSave = { title, content ->
                                         if (existingNote != null) {
-                                            if (title.isEmpty() && content.isEmpty()) {
-                                                notesViewModel.deleteNote(existingNote!!)
-                                            } else {
-                                                notesViewModel.updateNote(existingNote!!.copy(title = title, content = content))
-                                            }
+                                            notesViewModel.updateNote(existingNote!!.copy(title = title, content = content))
                                         } else {
                                             notesViewModel.addNote(title, content)
                                         }
                                         navController.popBackStack()
                                     },
+                                    onDelete = if (existingNote != null) {
+                                        {
+                                            notesViewModel.deleteNote(existingNote!!)
+                                            navController.popBackStack()
+                                        }
+                                    } else {
+                                        null
+                                    },
                                     onBack = { navController.popBackStack() }
                                 )
                             }
-                        }
-                    }
-                }
             }
         }
+    }
+}
     }
 }

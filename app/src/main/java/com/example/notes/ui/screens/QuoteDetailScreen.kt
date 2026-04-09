@@ -26,6 +26,7 @@ import com.example.notes.util.formatDate
 fun QuoteDetailScreen(
     quote: Quote? = null,
     onSave: (String, String) -> Unit,
+    onDelete: (() -> Unit)? = null,
     onBack: () -> Unit
 ) {
     val initialText = quote?.text.orEmpty()
@@ -82,7 +83,7 @@ fun QuoteDetailScreen(
                                 confirmButton = {
                                     TextButton(
                                         onClick = {
-                                            onSave("", "")
+                                            onDelete?.invoke()
                                             showDeleteDialog = false
                                         }
                                     ) {

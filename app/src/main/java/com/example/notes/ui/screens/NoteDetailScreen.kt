@@ -25,6 +25,7 @@ import com.example.notes.util.formatDate
 fun NoteDetailScreen(
     note: Note? = null,
     onSave: (String, String) -> Unit,
+    onDelete: (() -> Unit)? = null,
     onBack: () -> Unit
 ) {
     val initialTitle = note?.title.orEmpty()
@@ -81,10 +82,7 @@ fun NoteDetailScreen(
                                 confirmButton = {
                                     TextButton(
                                         onClick = {
-                                            // Здесь должна быть логика удаления через ViewModel, 
-                                            // но для простоты можно передать событие наверх
-                                            onSave("", "") // Сигнал к удалению или просто пустое сохранение? 
-                                            // Лучше добавить колбэк onDelete в параметры функции.
+                                            onDelete?.invoke()
                                             showDeleteDialog = false
                                         }
                                     ) {
