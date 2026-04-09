@@ -26,8 +26,6 @@ class MainViewModel(private val repository: UserPreferencesRepository) : ViewMod
             val prefs = repository.userPreferencesFlow.first()
             if (prefs.isFirstLaunch) {
                 _startDestination.value = "setup"
-            } else if (prefs.passwordHash != null) {
-                _startDestination.value = "login"
             } else {
                 _startDestination.value = "main_notes"
             }

@@ -1,5 +1,6 @@
 package com.example.notes.ui.screens
 
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
@@ -7,12 +8,18 @@ import androidx.compose.material.icons.automirrored.filled.Notes
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.AnnotatedString
@@ -29,8 +36,8 @@ fun MainTabsScreen(
     initialTab: Int = 0,
     notesViewModel: NotesViewModel,
     quotesViewModel: QuotesViewModel,
-    onNoteClick: (Note) -> Unit,
-    onQuoteClick: (Quote) -> Unit,
+    onEditNote: (Note) -> Unit,
+    onEditQuote: (Quote) -> Unit,
     onAddNote: () -> Unit,
     onAddQuote: () -> Unit,
     onSettingsClick: () -> Unit
@@ -39,15 +46,42 @@ fun MainTabsScreen(
     
     val notesLazyListState = rememberLazyListState()
     val quotesLazyListState = rememberLazyListState()
+
+    var isExpanded by rememberSaveable { mutableStateOf(true) }
+
+    val fabNestedScrollConnection = remember {
+        object : NestedScrollConnection {
+            override fun onPostScroll(
+                consumed: Offset,
+                available: Offset,
+                source: NestedScrollSource
+            ): Offset {
+                if (consumed.y < -15f && isExpanded) {
+                    isExpanded = false
+                } else if (consumed.y > 15f && !isExpanded) {
+                    isExpanded = true
+                }
+                return super.onPostScroll(consumed, available, source)
+            }
+        }
+    }
+
+    val isAtTop by remember {
+        derivedStateOf {
+            val state = if (selectedTab == 0) notesLazyListState else quotesLazyListState
+            state.firstVisibleItemIndex == 0 && state.firstVisibleItemScrollOffset == 0
+        }
+    }
+
+    LaunchedEffect(isAtTop) {
+        if (isAtTop) isExpanded = true
+    }
     
     val notes by notesViewModel.notes.collectAsState()
     val quotes by quotesViewModel.quotes.collectAsState()
 
     var noteToDelete by remember { mutableStateOf<Note?>(null) }
     var quoteToDelete by remember { mutableStateOf<Quote?>(null) }
-    
-    var noteToOptions by remember { mutableStateOf<Note?>(null) }
-    var quoteToOptions by remember { mutableStateOf<Quote?>(null) }
     
     val clipboardManager = LocalClipboardManager.current
     
@@ -61,12 +95,27 @@ fun MainTabsScreen(
     val selectedDate = if (selectedTab == 0) selectedNotesDate else selectedQuotesDate
     var showDatePicker by remember { mutableStateOf(false) }
 
-    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+
+    val bottomBarHeight = 80.dp
+    val animatedBottomPadding by animateDpAsState(
+        targetValue = if (isExpanded) bottomBarHeight else 0.dp,
+        label = "bottomBarPadding"
+    )
+
+    val animatedFabOffsetY by animateDpAsState(
+        targetValue = if (isExpanded) -bottomBarHeight - 16.dp else -16.dp,
+        label = "fabOffsetY"
+    )
 
     LaunchedEffect(isSearchActive) {
         if (isSearchActive) {
             focusRequester.requestFocus()
         }
+    }
+
+    LaunchedEffect(selectedTab) {
+        isExpanded = true
     }
 
     Scaffold(
@@ -107,7 +156,7 @@ fun MainTabsScreen(
                     }
                 )
             } else {
-                TopAppBar(
+                LargeTopAppBar(
                     title = {
                         if (selectedDate != null) {
                             Text("${if (selectedTab == 0) "Заметки" else "Цитаты"} • ${selectedDate.formatShortDate()}")
@@ -148,46 +197,76 @@ fun MainTabsScreen(
             }
         },
         bottomBar = {
-            NavigationBar {
-                NavigationBarItem(
-                    selected = selectedTab == 0,
-                    onClick = { selectedTab = 0 },
-                    icon = { Icon(Icons.AutoMirrored.Filled.Notes, contentDescription = null) },
-                    label = { Text("Заметки") }
-                )
-                NavigationBarItem(
-                    selected = selectedTab == 1,
-                    onClick = { selectedTab = 1 },
-                    icon = { Icon(Icons.Default.FormatQuote, contentDescription = null) },
-                    label = { Text("Цитаты") }
-                )
-            }
+            // Оставляем пустым, чтобы управлять панелью вручную для плавной анимации
         },
         floatingActionButton = {
-            FloatingActionButton(
+            ExtendedFloatingActionButton(
+                modifier = Modifier.offset(y = animatedFabOffsetY),
                 onClick = {
                     if (selectedTab == 0) onAddNote() else onAddQuote()
+                },
+                expanded = isExpanded,
+                icon = { Icon(Icons.Default.Add, contentDescription = null) },
+                text = { 
+                    Text(
+                        text = if (selectedTab == 0) "Заметка" else "Цитата",
+                        style = MaterialTheme.typography.titleMedium,
+                        maxLines = 1,
+                        softWrap = false
+                    ) 
                 }
-            ) {
-                Icon(Icons.Default.Add, contentDescription = "Добавить")
-            }
+            )
         }
     ) { innerPadding ->
-        Surface(modifier = Modifier.padding(innerPadding)) {
-            if (selectedTab == 0) {
-                NotesScreen(
-                    notes = notes,
-                    onNoteClick = onNoteClick,
-                    onDeleteConfirm = { noteToOptions = it },
-                    lazyListState = notesLazyListState
-                )
-            } else {
-                QuotesScreen(
-                    quotes = quotes,
-                    onQuoteClick = onQuoteClick,
-                    onDeleteConfirm = { quoteToOptions = it },
-                    lazyListState = quotesLazyListState
-                )
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(top = innerPadding.calculateTopPadding())
+        ) {
+            Surface(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(bottom = animatedBottomPadding)
+                    .nestedScroll(fabNestedScrollConnection)
+            ) {
+                if (selectedTab == 0) {
+                    NotesScreen(
+                        notes = notes,
+                        onEditClick = onEditNote,
+                        onDeleteConfirm = { noteToDelete = it },
+                        lazyListState = notesLazyListState
+                    )
+                } else {
+                    QuotesScreen(
+                        quotes = quotes,
+                        onEditClick = onEditQuote,
+                        onDeleteConfirm = { quoteToDelete = it },
+                        lazyListState = quotesLazyListState
+                    )
+                }
+            }
+
+            // Ручное управление NavigationBar для плавности
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .offset(y = if (isExpanded) 0.dp else bottomBarHeight)
+                    .alpha(if (isExpanded) 1f else 0f)
+            ) {
+                NavigationBar {
+                    NavigationBarItem(
+                        selected = selectedTab == 0,
+                        onClick = { selectedTab = 0 },
+                        icon = { Icon(Icons.AutoMirrored.Filled.Notes, contentDescription = null) },
+                        label = { Text("Заметки") }
+                    )
+                    NavigationBarItem(
+                        selected = selectedTab == 1,
+                        onClick = { selectedTab = 1 },
+                        icon = { Icon(Icons.Default.FormatQuote, contentDescription = null) },
+                        label = { Text("Цитаты") }
+                    )
+                }
             }
         }
     }
@@ -221,60 +300,6 @@ fun MainTabsScreen(
         ) {
             DatePicker(state = datePickerState)
         }
-    }
-
-    // Диалог действий для заметки
-    if (noteToOptions != null) {
-        AlertDialog(
-            onDismissRequest = { noteToOptions = null },
-            title = { Text("Выберите действие") },
-            confirmButton = {
-                val textToCopy = if (noteToOptions!!.title.isNotBlank()) {
-                    "${noteToOptions!!.title}\n\n${noteToOptions!!.content}"
-                } else {
-                    noteToOptions!!.content
-                }
-                TextButton(onClick = {
-                    clipboardManager.setText(AnnotatedString(textToCopy))
-                    noteToOptions = null
-                }) {
-                    Text("Копировать")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = {
-                    noteToDelete = noteToOptions
-                    noteToOptions = null
-                }) {
-                    Text("Удалить", color = MaterialTheme.colorScheme.error)
-                }
-            }
-        )
-    }
-
-    // Диалог действий для цитаты
-    if (quoteToOptions != null) {
-        AlertDialog(
-            onDismissRequest = { quoteToOptions = null },
-            title = { Text("Выберите действие") },
-            confirmButton = {
-                val textToCopy = "\"${quoteToOptions!!.text}\"\n— ${quoteToOptions!!.author}"
-                TextButton(onClick = {
-                    clipboardManager.setText(AnnotatedString(textToCopy))
-                    quoteToOptions = null
-                }) {
-                    Text("Копировать")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = {
-                    quoteToDelete = quoteToOptions
-                    quoteToOptions = null
-                }) {
-                    Text("Удалить", color = MaterialTheme.colorScheme.error)
-                }
-            }
-        )
     }
 
     // Диалог удаления заметки

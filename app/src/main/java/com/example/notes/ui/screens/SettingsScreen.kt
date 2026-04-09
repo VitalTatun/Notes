@@ -9,15 +9,11 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.example.notes.ui.viewmodel.SettingsViewModel
 
@@ -106,26 +102,6 @@ fun SettingsScreen(
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
             
-            SettingsSectionTitle("Безопасность")
-            
-            SettingsClickableItem(
-                title = if (uiState.hasPassword) "Сменить пароль" else "Установить пароль",
-                onClick = {
-                    if (uiState.hasPassword) viewModel.toggleChangePasswordDialog(true)
-                    else viewModel.toggleSetPasswordDialog(true)
-                }
-            )
-
-            if (uiState.hasPassword) {
-                SettingsSwitchItem(
-                    title = "Использовать отпечаток пальца",
-                    checked = uiState.isBiometricEnabled,
-                    onCheckedChange = { viewModel.setBiometricEnabled(it) }
-                )
-            }
-
-            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-            
             SettingsSectionTitle("Данные")
             
             SettingsClickableItem(
@@ -208,26 +184,6 @@ fun SettingsScreen(
             }
         )
     }
-
-    if (uiState.showChangePasswordDialog) {
-        PasswordDialog(
-            isChange = true,
-            initialQuestion = uiState.securityQuestion.orEmpty(),
-            onDismiss = { viewModel.toggleChangePasswordDialog(false) },
-            onConfirm = { old, new, q, a -> viewModel.updatePassword(old, new, q, a) },
-            error = uiState.error
-        )
-    }
-
-    if (uiState.showSetPasswordDialog) {
-        PasswordDialog(
-            isChange = false,
-            initialQuestion = uiState.securityQuestion.orEmpty(),
-            onDismiss = { viewModel.toggleSetPasswordDialog(false) },
-            onConfirm = { _, new, q, a -> viewModel.updatePassword(null, new, q, a) },
-            error = uiState.error
-        )
-    }
 }
 
 @Composable
@@ -280,119 +236,4 @@ fun SettingsSwitchItem(title: String, checked: Boolean, onCheckedChange: (Boolea
         Text(title, modifier = Modifier.weight(1f))
         Switch(checked = checked, onCheckedChange = onCheckedChange)
     }
-}
-
-@Composable
-fun PasswordDialog(
-    isChange: Boolean,
-    initialQuestion: String,
-    onDismiss: () -> Unit,
-    onConfirm: (String?, String, String, String) -> Unit,
-    error: String?
-) {
-    var oldPassword by remember { mutableStateOf("") }
-    var newPassword by remember { mutableStateOf("") }
-    var confirmPassword by remember { mutableStateOf("") }
-    var question by remember(initialQuestion) { mutableStateOf(initialQuestion) }
-    var answer by remember { mutableStateOf("") }
-    var isOldPasswordVisible by remember { mutableStateOf(false) }
-    var isNewPasswordVisible by remember { mutableStateOf(false) }
-    var isConfirmPasswordVisible by remember { mutableStateOf(false) }
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(if (isChange) "Смена пароля" else "Установка пароля") },
-        text = {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                if (isChange) {
-                    OutlinedTextField(
-                        value = oldPassword,
-                        onValueChange = { oldPassword = it },
-                        label = { Text("Старый пароль") },
-                        visualTransformation = if (isOldPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                        trailingIcon = {
-                            IconButton(onClick = { isOldPasswordVisible = !isOldPasswordVisible }) {
-                                Icon(
-                                    imageVector = if (isOldPasswordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                                    contentDescription = if (isOldPasswordVisible) "Скрыть пароль" else "Показать пароль"
-                                )
-                            }
-                        },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-                OutlinedTextField(
-                    value = newPassword,
-                    onValueChange = { newPassword = it },
-                    label = { Text("Новый пароль") },
-                    visualTransformation = if (isNewPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                    trailingIcon = {
-                        IconButton(onClick = { isNewPasswordVisible = !isNewPasswordVisible }) {
-                            Icon(
-                                imageVector = if (isNewPasswordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                                contentDescription = if (isNewPasswordVisible) "Скрыть пароль" else "Показать пароль"
-                            )
-                        }
-                    },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                OutlinedTextField(
-                    value = confirmPassword,
-                    onValueChange = { confirmPassword = it },
-                    label = { Text("Подтвердите пароль") },
-                    visualTransformation = if (isConfirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                    trailingIcon = {
-                        IconButton(onClick = { isConfirmPasswordVisible = !isConfirmPasswordVisible }) {
-                            Icon(
-                                imageVector = if (isConfirmPasswordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                                contentDescription = if (isConfirmPasswordVisible) "Скрыть пароль" else "Показать пароль"
-                            )
-                        }
-                    },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                OutlinedTextField(
-                    value = question,
-                    onValueChange = { question = it },
-                    label = { Text("Контрольный вопрос") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                OutlinedTextField(
-                    value = answer,
-                    onValueChange = { answer = it },
-                    label = { Text("Ответ") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                if (confirmPassword.isNotEmpty() && newPassword != confirmPassword) {
-                    Text(
-                        "Пароли не совпадают",
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                }
-                if (error != null) {
-                    Text(error, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
-                }
-            }
-        },
-        confirmButton = {
-            Button(
-                onClick = { onConfirm(if (isChange) oldPassword else null, newPassword, question, answer) },
-                enabled = newPassword.isNotBlank() && newPassword == confirmPassword
-            ) {
-                Text("Сохранить")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Отмена") }
-        }
-    )
 }

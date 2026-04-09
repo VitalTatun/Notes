@@ -40,7 +40,7 @@ class NotesWidget : GlanceAppWidget() {
             modifier = GlanceModifier
                 .fillMaxSize()
                 .background(GlanceTheme.colors.widgetBackground)
-                .cornerRadius(28.dp)
+                .cornerRadius(R.dimen.widget_corner_radius)
                 .padding(8.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalAlignment = Alignment.CenterVertically
@@ -86,7 +86,7 @@ class NotesWidget : GlanceAppWidget() {
             modifier = modifier
                 .fillMaxHeight()
                 .background(GlanceTheme.colors.secondaryContainer)
-                .cornerRadius(20.dp)
+                .cornerRadius(R.dimen.widget_inner_radius)
                 .clickable(action),
             contentAlignment = Alignment.Center
         ) {

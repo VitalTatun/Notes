@@ -5,12 +5,9 @@ import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.example.notes.data.local.entities.Note
-import com.example.notes.data.local.entities.Quote
 import com.example.notes.data.repository.NotesRepository
 import com.example.notes.data.repository.QuotesRepository
 import com.example.notes.data.repository.UserPreferencesRepository
-import com.example.notes.util.SecurityUtils
 import com.example.notes.util.ShareUtils
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -25,13 +22,8 @@ import java.util.concurrent.TimeUnit
 
 data class SettingsUiState(
     val themeMode: String = "SYSTEM",
-    val isBiometricEnabled: Boolean = false,
-    val hasPassword: Boolean = false,
-    val securityQuestion: String? = null,
     val fontScale: Float = 1.0f,
     val useSystemFontSize: Boolean = true,
-    val showChangePasswordDialog: Boolean = false,
-    val showSetPasswordDialog: Boolean = false,
     val error: String? = null,
     val message: String? = null
 )
@@ -50,9 +42,6 @@ class SettingsViewModel(
             prefsRepository.userPreferencesFlow.collect { prefs ->
                 _uiState.value = _uiState.value.copy(
                     themeMode = prefs.themeMode,
-                    isBiometricEnabled = prefs.isBiometricEnabled,
-                    hasPassword = prefs.passwordHash != null,
-                    securityQuestion = prefs.securityQuestion,
                     fontScale = prefs.fontScale,
                     useSystemFontSize = prefs.useSystemFontSize
                 )
@@ -78,63 +67,8 @@ class SettingsViewModel(
         }
     }
 
-    fun setBiometricEnabled(enabled: Boolean) {
-        viewModelScope.launch {
-            prefsRepository.setBiometricEnabled(enabled)
-        }
-    }
-
-    fun updatePassword(oldPassword: String?, newPassword: String, question: String, answer: String) {
-        viewModelScope.launch {
-            val prefs = prefsRepository.userPreferencesFlow.first()
-
-            if (prefs.passwordHash != null && oldPassword.isNullOrBlank()) {
-                _uiState.value = _uiState.value.copy(error = "Введите старый пароль")
-                return@launch
-            }
-            if (prefs.passwordHash != null && oldPassword != null) {
-                if (!SecurityUtils.verifyHash(oldPassword, prefs.passwordHash)) {
-                    _uiState.value = _uiState.value.copy(error = "Неверный старый пароль")
-                    return@launch
-                }
-            }
-            if (newPassword.length < 4) {
-                _uiState.value = _uiState.value.copy(error = "Пароль слишком короткий (мин. 4 символа)")
-                return@launch
-            }
-            if (question.isBlank()) {
-                _uiState.value = _uiState.value.copy(error = "Введите контрольный вопрос")
-                return@launch
-            }
-            if (answer.isBlank()) {
-                _uiState.value = _uiState.value.copy(error = "Введите ответ на контрольный вопрос")
-                return@launch
-            }
-            
-            prefsRepository.updatePassword(
-                hash = SecurityUtils.createHash(newPassword),
-                question = question,
-                answerHash = SecurityUtils.createHash(answer)
-            )
-            _uiState.value = _uiState.value.copy(
-                message = "Пароль успешно обновлен",
-                showChangePasswordDialog = false,
-                showSetPasswordDialog = false,
-                error = null
-            )
-        }
-    }
-
     fun clearMessage() {
         _uiState.value = _uiState.value.copy(message = null, error = null)
-    }
-
-    fun toggleChangePasswordDialog(show: Boolean) {
-        _uiState.value = _uiState.value.copy(showChangePasswordDialog = show, error = null)
-    }
-
-    fun toggleSetPasswordDialog(show: Boolean) {
-        _uiState.value = _uiState.value.copy(showSetPasswordDialog = show, error = null)
     }
 
     fun exportData(context: Context) {

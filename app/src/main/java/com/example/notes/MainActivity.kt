@@ -4,6 +4,8 @@ import android.os.Bundle
 import androidx.fragment.app.FragmentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.*
+import androidx.compose.animation.core.tween
 import androidx.compose.runtime.*
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
@@ -39,26 +41,55 @@ class MainActivity : FragmentActivity() {
             ) {
                 if (startDestination != null) {
                     val navController = rememberNavController()
-                    
-                    LaunchedEffect(intent?.data) {
-                        intent?.data?.let { uri ->
+
+                    val currentIntent = intent
+                    LaunchedEffect(currentIntent?.data) {
+                        currentIntent?.data?.let { uri ->
                             when (uri.toString()) {
                                 "notesapp://add_note" -> {
-                                    navController.navigate("main_notes?tab=0")
+                                    navController.navigate("main_notes?tab=0") {
+                                        popUpTo("main_notes") { inclusive = true }
+                                    }
                                     navController.navigate("note_detail")
                                 }
                                 "notesapp://add_quote" -> {
-                                    navController.navigate("main_notes?tab=1")
+                                    navController.navigate("main_notes?tab=1") {
+                                        popUpTo("main_notes") { inclusive = true }
+                                    }
                                     navController.navigate("quote_detail")
                                 }
                             }
-                            intent.data = null // Очищаем, чтобы не срабатывало при повороте
+                            currentIntent.data = null
                         }
                     }
 
                     NavHost(
                         navController = navController,
-                        startDestination = startDestination!!
+                        startDestination = startDestination!!,
+                        enterTransition = {
+                            slideInHorizontally(
+                                initialOffsetX = { it },
+                                animationSpec = tween(300)
+                            ) + fadeIn(animationSpec = tween(300))
+                        },
+                        exitTransition = {
+                            slideOutHorizontally(
+                                targetOffsetX = { -it },
+                                animationSpec = tween(300)
+                            ) + fadeOut(animationSpec = tween(300))
+                        },
+                        popEnterTransition = {
+                            slideInHorizontally(
+                                initialOffsetX = { -it },
+                                animationSpec = tween(300)
+                            ) + fadeIn(animationSpec = tween(300))
+                        },
+                        popExitTransition = {
+                            slideOutHorizontally(
+                                targetOffsetX = { it },
+                                animationSpec = tween(300)
+                            ) + fadeOut(animationSpec = tween(300))
+                        }
                     ) {
                         composable("setup") {
                             val setupViewModel: SetupViewModel = viewModel(
@@ -69,20 +100,6 @@ class MainActivity : FragmentActivity() {
                                 onFinish = {
                                     navController.navigate("main_notes") {
                                         popUpTo("setup") { inclusive = true }
-                                    }
-                                }
-                            )
-                        }
-                        composable("login") {
-                            val loginViewModel: LoginViewModel = viewModel(
-                                factory = LoginViewModel.Factory(app.userPreferencesRepository)
-                            )
-                            LoginScreen(
-                                activity = this@MainActivity,
-                                viewModel = loginViewModel,
-                                onLoginSuccess = {
-                                    navController.navigate("main_notes") {
-                                        popUpTo("login") { inclusive = true }
                                     }
                                 }
                             )
@@ -107,10 +124,10 @@ class MainActivity : FragmentActivity() {
                                 initialTab = initialTab,
                                 notesViewModel = notesViewModel,
                                 quotesViewModel = quotesViewModel,
-                                onNoteClick = { note ->
+                                onEditNote = { note ->
                                     navController.navigate("note_detail?noteId=${note.id}")
                                 },
-                                onQuoteClick = { quote ->
+                                onEditQuote = { quote ->
                                     navController.navigate("quote_detail?quoteId=${quote.id}")
                                 },
                                 onAddNote = {
@@ -164,7 +181,11 @@ class MainActivity : FragmentActivity() {
                                     quote = existingQuote,
                                     onSave = { text, author ->
                                         if (existingQuote != null) {
-                                            quotesViewModel.updateQuote(existingQuote!!.copy(text = text, author = author))
+                                            if (text.isEmpty() && author.isEmpty()) {
+                                                quotesViewModel.deleteQuote(existingQuote!!)
+                                            } else {
+                                                quotesViewModel.updateQuote(existingQuote!!.copy(text = text, author = author))
+                                            }
                                         } else {
                                             quotesViewModel.addQuote(text, author)
                                         }
@@ -201,7 +222,11 @@ class MainActivity : FragmentActivity() {
                                     note = existingNote,
                                     onSave = { title, content ->
                                         if (existingNote != null) {
-                                            notesViewModel.updateNote(existingNote!!.copy(title = title, content = content))
+                                            if (title.isEmpty() && content.isEmpty()) {
+                                                notesViewModel.deleteNote(existingNote!!)
+                                            } else {
+                                                notesViewModel.updateNote(existingNote!!.copy(title = title, content = content))
+                                            }
                                         } else {
                                             notesViewModel.addNote(title, content)
                                         }
