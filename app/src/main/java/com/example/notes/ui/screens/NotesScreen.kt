@@ -7,10 +7,16 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.notes.data.local.entities.Note
@@ -20,10 +26,12 @@ import com.example.notes.util.formatDate
 @Composable
 fun NotesScreen(
     notes: List<Note>,
-    onNoteClick: (Note) -> Unit,
+    onEditClick: (Note) -> Unit,
     onDeleteConfirm: (Note) -> Unit,
     lazyListState: LazyListState = rememberLazyListState()
 ) {
+    val clipboardManager = LocalClipboardManager.current
+    
     Column(modifier = Modifier.fillMaxSize()) {
         if (notes.isEmpty()) {
             Box(
@@ -40,11 +48,52 @@ fun NotesScreen(
             ) {
                 items(notes, key = { it.id }) { note ->
                     Column {
-                        NoteItem(
-                            note = note,
-                            onClick = { onNoteClick(note) },
-                            onLongClick = { onDeleteConfirm(note) }
-                        )
+                        var showMenu by remember { mutableStateOf(false) }
+                        
+                        Box {
+                            NoteItem(
+                                note = note,
+                                onLongClick = { showMenu = true }
+                            )
+
+                            DropdownMenu(
+                                expanded = showMenu,
+                                onDismissRequest = { showMenu = false }
+                            ) {
+                                DropdownMenuItem(
+                                    text = { Text("Открыть") },
+                                    leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) },
+                                    onClick = {
+                                        showMenu = false
+                                        onEditClick(note)
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("Скопировать") },
+                                    leadingIcon = { Icon(Icons.Default.ContentCopy, contentDescription = null) },
+                                    onClick = {
+                                        showMenu = false
+                                        clipboardManager.setText(AnnotatedString(note.content))
+                                    }
+                                )
+                                HorizontalDivider()
+                                DropdownMenuItem(
+                                    text = { Text("Удалить", color = MaterialTheme.colorScheme.error) },
+                                    leadingIcon = {
+                                        Icon(
+                                            Icons.Default.Delete,
+                                            contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.error
+                                        )
+                                    },
+                                    onClick = {
+                                        showMenu = false
+                                        onDeleteConfirm(note)
+                                    }
+                                )
+                            }
+                        }
+
                         HorizontalDivider(
                             modifier = Modifier.padding(horizontal = 16.dp),
                             color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
@@ -60,14 +109,13 @@ fun NotesScreen(
 @Composable
 fun NoteItem(
     note: Note,
-    onClick: () -> Unit,
     onLongClick: () -> Unit
 ) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .combinedClickable(
-                onClick = onClick,
+                onClick = {},
                 onLongClick = onLongClick
             )
             .padding(horizontal = 16.dp, vertical = 12.dp)

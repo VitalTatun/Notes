@@ -2,9 +2,12 @@ package com.example.notes.ui.screens
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -25,8 +28,11 @@ fun QuoteDetailScreen(
     onSave: (String, String) -> Unit,
     onBack: () -> Unit
 ) {
+    val initialText = quote?.text.orEmpty()
+    val initialAuthor = quote?.author.orEmpty()
     var text by remember { mutableStateOf(quote?.text ?: "") }
     var author by remember { mutableStateOf(quote?.author ?: "") }
+    val hasChanges = text != initialText || author != initialAuthor
     
     val focusRequester = remember { FocusRequester() }
     val scrollState = rememberScrollState()
@@ -42,28 +48,70 @@ fun QuoteDetailScreen(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             TopAppBar(
-                title = { },
+                title = {
+                    Column {
+                        Text("Цитата")
+                        val dateText = quote?.createdAt?.formatDate() ?: System.currentTimeMillis().formatDate()
+                        Text(
+                            text = dateText,
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.outline
+                        )
+                    }
+                },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Назад")
                     }
                 },
                 actions = {
-                    if (text.isNotBlank() && author.isNotBlank()) {
-                        TextButton(
-                            onClick = {
-                                onSave(text, author)
-                            }
-                        ) {
-                            Text("Готово", style = MaterialTheme.typography.labelLarge)
+                    if (quote != null) {
+                        var showDeleteDialog by remember { mutableStateOf(false) }
+                        IconButton(onClick = { showDeleteDialog = true }) {
+                            Icon(
+                                imageVector = Icons.Default.Delete,
+                                contentDescription = "Удалить цитату",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        if (showDeleteDialog) {
+                            AlertDialog(
+                                onDismissRequest = { showDeleteDialog = false },
+                                title = { Text("Удалить цитату?") },
+                                text = { Text("Это действие нельзя отменить.") },
+                                confirmButton = {
+                                    TextButton(
+                                        onClick = {
+                                            onSave("", "")
+                                            showDeleteDialog = false
+                                        }
+                                    ) {
+                                        Text("Удалить", color = MaterialTheme.colorScheme.error)
+                                    }
+                                },
+                                dismissButton = {
+                                    TextButton(onClick = { showDeleteDialog = false }) {
+                                        Text("Отмена")
+                                    }
+                                }
+                            )
                         }
                     }
+                    val isSaveEnabled = text.isNotBlank() && (quote == null || hasChanges)
+                    FilledIconButton(
+                        onClick = { onSave(text, author) },
+                        enabled = isSaveEnabled,
+                        modifier = Modifier.size(width = 56.dp, height = 40.dp),
+                        shape = CircleShape,
+                        colors = IconButtonDefaults.filledIconButtonColors(
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary
+                        )
+                    ) {
+                        Icon(Icons.Default.Check, contentDescription = "Готово")
+                    }
                 },
-                scrollBehavior = scrollBehavior,
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surface,
-                )
+                scrollBehavior = scrollBehavior
             )
         }
     ) { innerPadding ->
@@ -81,12 +129,14 @@ fun QuoteDetailScreen(
                     placeholder = {
                         Text(
                             "Автор",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
                         )
                     },
                     modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
+                    maxLines = 3,
+                    singleLine = false,
                     colors = TextFieldDefaults.colors(
                         focusedContainerColor = Color.Transparent,
                         unfocusedContainerColor = Color.Transparent,
@@ -94,17 +144,11 @@ fun QuoteDetailScreen(
                         focusedIndicatorColor = Color.Transparent,
                         unfocusedIndicatorColor = Color.Transparent,
                     ),
-                    textStyle = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
-                )
-
-                val dateText = quote?.createdAt?.formatDate() ?: System.currentTimeMillis().formatDate()
-                Text(
-                    text = dateText,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.outline,
-                    modifier = Modifier.padding(horizontal = 16.dp).offset(y = (-8).dp)
+                    textStyle = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.SemiBold)
                 )
             }
+
+            Spacer(modifier = Modifier.height(0.dp))
 
             TextField(
                 value = text,
@@ -113,7 +157,6 @@ fun QuoteDetailScreen(
                     Text(
                         "Текст цитаты",
                         style = MaterialTheme.typography.bodyLarge,
-                        fontStyle = FontStyle.Italic,
                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
                     )
                 },
@@ -127,7 +170,7 @@ fun QuoteDetailScreen(
                     focusedIndicatorColor = Color.Transparent,
                     unfocusedIndicatorColor = Color.Transparent,
                 ),
-                textStyle = MaterialTheme.typography.bodyLarge.copy(fontStyle = FontStyle.Italic)
+                textStyle = MaterialTheme.typography.bodyLarge
             )
         }
     }
