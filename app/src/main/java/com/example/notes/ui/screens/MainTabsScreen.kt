@@ -3,7 +3,6 @@ package com.example.notes.ui.screens
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Notes
@@ -19,9 +18,7 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import com.example.notes.data.local.entities.Note
 import com.example.notes.data.local.entities.Quote
@@ -74,24 +71,18 @@ fun MainTabsScreen(
     LaunchedEffect(isAtTop) {
         if (isAtTop) isExpanded = true
     }
-    
-    val notes by notesViewModel.notes.collectAsState()
-    val quotes by quotesViewModel.quotes.collectAsState()
 
     var noteToDelete by remember { mutableStateOf<Note?>(null) }
     var quoteToDelete by remember { mutableStateOf<Quote?>(null) }
 
-    val clipboardManager = LocalClipboardManager.current
     val focusManager = LocalFocusManager.current
 
-    val notesSearchQuery by notesViewModel.searchQuery.collectAsState()
-    val quotesSearchQuery by quotesViewModel.searchQuery.collectAsState()
-    val activeSearchQuery = if (selectedTab == 0) notesSearchQuery else quotesSearchQuery
-    val selectedNotesDate by notesViewModel.selectedDateMillis.collectAsState()
-    val selectedQuotesDate by quotesViewModel.selectedDateMillis.collectAsState()
-    val selectedDate = if (selectedTab == 0) selectedNotesDate else selectedQuotesDate
+    val selectedDate = if (selectedTab == 0) {
+        notesViewModel.selectedDateMillis.collectAsState().value
+    } else {
+        quotesViewModel.selectedDateMillis.collectAsState().value
+    }
     var showDatePicker by remember { mutableStateOf(false) }
-
     val bottomBarHeight = 80.dp
     val animatedBottomPadding by animateDpAsState(
         targetValue = if (isExpanded) bottomBarHeight else 0.dp,
@@ -108,106 +99,64 @@ fun MainTabsScreen(
         focusManager.clearFocus()
     }
 
-    val searchPlaceholder = if (selectedTab == 0) "Поиск в заметках" else "Поиск в цитатах"
-    val onSearchQueryChange: (String) -> Unit = { query ->
-        if (selectedTab == 0) notesViewModel.onSearchQueryChange(query)
-        else quotesViewModel.onSearchQueryChange(query)
-    }
+    val screenTitle = if (selectedTab == 0) "Заметки" else "Цитаты"
 
     Scaffold(
         bottomBar = {
             // Оставляем пустым, чтобы управлять панелью вручную для плавной анимации
         },
         topBar = {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .statusBarsPadding()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                SearchBar(
-                    inputField = {
-                        SearchBarDefaults.InputField(
-                            query = activeSearchQuery,
-                            onQueryChange = onSearchQueryChange,
-                            onSearch = { focusManager.clearFocus() },
-                            expanded = false,
-                            onExpandedChange = {},
-                            placeholder = { Text(searchPlaceholder) },
-                            leadingIcon = {
-                                Icon(Icons.Default.Search, contentDescription = null)
-                            },
-                            trailingIcon = {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    if (activeSearchQuery.isNotBlank()) {
-                                        IconButton(
-                                            onClick = {
-                                                onSearchQueryChange("")
-                                                focusManager.clearFocus()
-                                            }
-                                        ) {
-                                            Icon(
-                                                imageVector = Icons.Default.Close,
-                                                contentDescription = "Очистить поиск"
-                                            )
-                                        }
-                                    }
-                                    if (selectedDate != null) {
-                                        IconButton(
-                                            onClick = {
-                                                focusManager.clearFocus()
-                                                if (selectedTab == 0) {
-                                                    notesViewModel.setSelectedDate(null)
-                                                } else {
-                                                    quotesViewModel.setSelectedDate(null)
-                                                }
-                                            }
-                                        ) {
-                                            Icon(
-                                                imageVector = Icons.Default.Close,
-                                                contentDescription = "Сбросить фильтр по дате"
-                                            )
-                                        }
-                                    }
-                                    IconButton(
-                                        onClick = {
-                                            focusManager.clearFocus()
-                                            showDatePicker = true
-                                        }
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Default.DateRange,
-                                            contentDescription = "Фильтр по дате",
-                                            tint = if (selectedDate != null) {
-                                                MaterialTheme.colorScheme.primary
-                                            } else {
-                                                LocalContentColor.current
-                                            }
-                                        )
-                                    }
-                                    IconButton(
-                                        onClick = {
-                                            focusManager.clearFocus()
-                                            onSettingsClick()
-                                        }
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Default.Settings,
-                                            contentDescription = "Настройки"
-                                        )
-                                    }
+            TopAppBar(
+                title = {
+                    Text(
+                        text = screenTitle,
+                        maxLines = 1
+                    )
+                },
+                actions = {
+                    if (selectedDate != null) {
+                        IconButton(
+                            onClick = {
+                                focusManager.clearFocus()
+                                if (selectedTab == 0) {
+                                    notesViewModel.setSelectedDate(null)
+                                } else {
+                                    quotesViewModel.setSelectedDate(null)
                                 }
                             }
+                        ) {
+                            Icon(Icons.Default.Close, contentDescription = "Сбросить фильтр по дате")
+                        }
+                    }
+                    IconButton(onClick = { }) {
+                        Icon(Icons.Default.Search, contentDescription = "Поиск")
+                    }
+                    IconButton(
+                        onClick = {
+                            focusManager.clearFocus()
+                            showDatePicker = true
+                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.DateRange,
+                            contentDescription = "Фильтр по дате",
+                            tint = if (selectedDate != null) {
+                                MaterialTheme.colorScheme.primary
+                            } else {
+                                LocalContentColor.current
+                            }
                         )
-                    },
-                    expanded = false,
-                    onExpandedChange = {},
-                    modifier = Modifier.fillMaxWidth()
-                ) {}
-            }
+                    }
+                    IconButton(
+                        onClick = {
+                            focusManager.clearFocus()
+                            onSettingsClick()
+                        }
+                    ) {
+                        Icon(Icons.Default.Settings, contentDescription = "Настройки")
+                    }
+                }
+            )
         },
         floatingActionButton = {
             ExtendedFloatingActionButton(
@@ -244,6 +193,7 @@ fun MainTabsScreen(
                     .nestedScroll(fabNestedScrollConnection)
             ) {
                 if (selectedTab == 0) {
+                    val notes by notesViewModel.notes.collectAsState()
                     NotesScreen(
                         notes = notes,
                         onEditClick = onEditNote,
@@ -251,6 +201,7 @@ fun MainTabsScreen(
                         lazyListState = notesLazyListState
                     )
                 } else {
+                    val quotes by quotesViewModel.quotes.collectAsState()
                     QuotesScreen(
                         quotes = quotes,
                         onEditClick = onEditQuote,

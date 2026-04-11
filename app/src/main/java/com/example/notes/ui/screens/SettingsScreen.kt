@@ -192,7 +192,7 @@ fun SettingsSectionTitle(title: String) {
         text = title,
         style = MaterialTheme.typography.labelLarge,
         color = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.padding(16.dp, 16.dp, 16.dp, 8.dp)
+        modifier = Modifier.padding(16.dp, 14.dp, 16.dp, 4.dp)
     )
 }
 
@@ -202,7 +202,7 @@ fun ThemeOption(label: String, value: String, selectedValue: String, onSelect: (
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onSelect(value) }
-            .padding(16.dp, 12.dp),
+            .padding(horizontal = 16.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         RadioButton(selected = (value == selectedValue), onClick = { onSelect(value) })

@@ -50,7 +50,7 @@ fun NoteDetailScreen(
             TopAppBar(
                 title = {
                     Column {
-                        Text("Заметка")
+                        Text(if (note == null) "Новая заметка" else "Редактирование")
                         val dateText = note?.createdAt?.formatDate() ?: System.currentTimeMillis().formatDate()
                         Text(
                             text = dateText,

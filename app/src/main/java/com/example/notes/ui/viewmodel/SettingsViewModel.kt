@@ -9,10 +9,7 @@ import com.example.notes.data.repository.NotesRepository
 import com.example.notes.data.repository.QuotesRepository
 import com.example.notes.data.repository.UserPreferencesRepository
 import com.example.notes.util.ShareUtils
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import org.json.JSONArray
 import org.json.JSONObject
@@ -25,26 +22,36 @@ data class SettingsUiState(
     val fontScale: Float = 1.0f,
     val useSystemFontSize: Boolean = true,
     val error: String? = null,
-    val message: String? = null
+    val message: String? = null,
+    val isLoading: Boolean = true
 )
 
 class SettingsViewModel(
     private val prefsRepository: UserPreferencesRepository,
     private val notesRepository: NotesRepository,
-    private val quotesRepository: QuotesRepository
+    private val quotesRepository: QuotesRepository,
+    initialThemeMode: String = "SYSTEM",
+    initialFontScale: Float = 1.0f,
+    initialUseSystemFontSize: Boolean = true
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(SettingsUiState())
+    private val _uiState = MutableStateFlow(SettingsUiState(
+        themeMode = initialThemeMode,
+        fontScale = initialFontScale,
+        useSystemFontSize = initialUseSystemFontSize,
+        isLoading = true
+    ))
     val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
 
     init {
         viewModelScope.launch {
             prefsRepository.userPreferencesFlow.collect { prefs ->
-                _uiState.value = _uiState.value.copy(
+                _uiState.update { it.copy(
                     themeMode = prefs.themeMode,
                     fontScale = prefs.fontScale,
-                    useSystemFontSize = prefs.useSystemFontSize
-                )
+                    useSystemFontSize = prefs.useSystemFontSize,
+                    isLoading = false
+                ) }
             }
         }
     }
@@ -68,7 +75,7 @@ class SettingsViewModel(
     }
 
     fun clearMessage() {
-        _uiState.value = _uiState.value.copy(message = null, error = null)
+        _uiState.update { it.copy(message = null, error = null) }
     }
 
     fun exportData(context: Context) {
@@ -103,9 +110,9 @@ class SettingsViewModel(
                 val fileName = "notes_export_${System.currentTimeMillis()}.json"
                 
                 ShareUtils.shareJsonFile(context, jsonString, fileName)
-                _uiState.value = _uiState.value.copy(message = "Данные подготовлены к экспорту")
+                _uiState.update { it.copy(message = "Данные подготовлены к экспорту") }
             } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(error = "Ошибка экспорта: ${e.message}")
+                _uiState.update { it.copy(error = "Ошибка экспорта: ${e.message}") }
             }
         }
     }
@@ -115,9 +122,9 @@ class SettingsViewModel(
             try {
                 notesRepository.deleteAllNotes()
                 quotesRepository.deleteAllQuotes()
-                _uiState.value = _uiState.value.copy(message = "Все записи удалены")
+                _uiState.update { it.copy(message = "Все записи удалены") }
             } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(error = "Ошибка при удалении: ${e.message}")
+                _uiState.update { it.copy(error = "Ошибка при удалении: ${e.message}") }
             }
         }
     }
@@ -167,9 +174,9 @@ class SettingsViewModel(
                     }
                 }
                 
-                _uiState.value = _uiState.value.copy(message = "Импорт завершен успешно")
+                _uiState.update { it.copy(message = "Импорт завершен успешно") }
             } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(error = "Ошибка импорта: ${e.message}")
+                _uiState.update { it.copy(error = "Ошибка импорта: ${e.message}") }
             }
         }
     }
@@ -180,7 +187,6 @@ class SettingsViewModel(
                 val now = System.currentTimeMillis()
                 val dayMillis = TimeUnit.DAYS.toMillis(1)
 
-                // Добавляем 50 заметок
                 for (i in 1..50) {
                     val daysAgo = (i - 1) % 7
                     val createdAt = now - (daysAgo * dayMillis) - (i * 60_000L)
@@ -191,7 +197,6 @@ class SettingsViewModel(
                     )
                 }
                 
-                // Список авторов и цитат для разнообразия
                 val authors = listOf("Марк Твен", "Альберт Эйнштейн", "Стив Джобс", "Оскар Уайльд", "Лев Толстой")
                 val quotes = listOf(
                     "Единственный способ делать великие дела — любить то, что вы делаете.",
@@ -201,7 +206,6 @@ class SettingsViewModel(
                     "Слухи о моей смерти несколько преувеличены."
                 )
 
-                // Добавляем 50 цитат
                 for (i in 1..50) {
                     val daysAgo = (i - 1) % 7
                     val createdAt = now - (daysAgo * dayMillis) - (i * 90_000L)
@@ -211,9 +215,9 @@ class SettingsViewModel(
                         createdAt = createdAt
                     )
                 }
-                _uiState.value = _uiState.value.copy(message = "Добавлено по 50 тестовых записей за последние 7 дней")
+                _uiState.update { it.copy(message = "Добавлено по 50 тестовых записей за последние 7 дней") }
             } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(error = "Ошибка при добавлении: ${e.message}")
+                _uiState.update { it.copy(error = "Ошибка при добавлении: ${e.message}") }
             }
         }
     }
@@ -221,11 +225,21 @@ class SettingsViewModel(
     class Factory(
         private val prefsRepository: UserPreferencesRepository,
         private val notesRepository: NotesRepository,
-        private val quotesRepository: QuotesRepository
+        private val quotesRepository: QuotesRepository,
+        private val initialThemeMode: String = "SYSTEM",
+        private val initialFontScale: Float = 1.0f,
+        private val initialUseSystemFontSize: Boolean = true
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
-            return SettingsViewModel(prefsRepository, notesRepository, quotesRepository) as T
+            return SettingsViewModel(
+                prefsRepository, 
+                notesRepository, 
+                quotesRepository,
+                initialThemeMode,
+                initialFontScale,
+                initialUseSystemFontSize
+            ) as T
         }
     }
 }

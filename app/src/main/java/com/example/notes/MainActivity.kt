@@ -4,14 +4,17 @@ import android.os.Bundle
 import androidx.fragment.app.FragmentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.animation.*
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.animation.core.tween
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -34,45 +37,38 @@ class MainActivity : FragmentActivity() {
             val mainViewModel: MainViewModel = viewModel(
                 factory = MainViewModel.Factory(app.userPreferencesRepository)
             )
-            val themeMode by mainViewModel.themeMode.collectAsState("SYSTEM")
-            val fontScale by mainViewModel.fontScale.collectAsState(1.0f)
-            val useSystemFontSize by mainViewModel.useSystemFontSize.collectAsState(true)
+            val themeMode by mainViewModel.themeMode.collectAsState(initial = "SYSTEM")
+            val fontScale by mainViewModel.fontScale.collectAsState(initial = 1.0f)
+            val useSystemFontSize by mainViewModel.useSystemFontSize.collectAsState(initial = true)
             
             NotesTheme(
                 themeMode = themeMode,
                 fontScale = fontScale,
-                useSystemFontSize = useSystemFontSize
+                useSystemFontSize = useSystemFontSize,
+                dynamicColor = true // Возвращаем динамические цвета
             ) {
                 val navController = rememberNavController()
 
-                NavHost(
-                    navController = navController,
-                    startDestination = "main_notes",
-                    enterTransition = {
-                        slideInHorizontally(
-                            initialOffsetX = { it },
-                            animationSpec = tween(300)
-                        ) + fadeIn(animationSpec = tween(300))
-                    },
-                    exitTransition = {
-                        slideOutHorizontally(
-                            targetOffsetX = { -it },
-                            animationSpec = tween(300)
-                        ) + fadeOut(animationSpec = tween(300))
-                    },
-                    popEnterTransition = {
-                        slideInHorizontally(
-                            initialOffsetX = { -it },
-                            animationSpec = tween(300)
-                        ) + fadeIn(animationSpec = tween(300))
-                    },
-                    popExitTransition = {
-                        slideOutHorizontally(
-                            targetOffsetX = { it },
-                            animationSpec = tween(300)
-                        ) + fadeOut(animationSpec = tween(300))
-                    }
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
                 ) {
+                    NavHost(
+                        navController = navController,
+                        startDestination = "main_notes",
+                        enterTransition = {
+                            fadeIn(animationSpec = tween(220))
+                        },
+                        exitTransition = {
+                            fadeOut(animationSpec = tween(180))
+                        },
+                        popEnterTransition = {
+                            fadeIn(animationSpec = tween(220))
+                        },
+                        popExitTransition = {
+                            fadeOut(animationSpec = tween(180))
+                        }
+                    ) {
                         composable(
                             route = "main_notes?tab={tab}",
                             arguments = listOf(
@@ -115,7 +111,10 @@ class MainActivity : FragmentActivity() {
                                 factory = SettingsViewModel.Factory(
                                     app.userPreferencesRepository,
                                     app.notesRepository,
-                                    app.quotesRepository
+                                    app.quotesRepository,
+                                    initialThemeMode = themeMode,
+                                    initialFontScale = fontScale,
+                                    initialUseSystemFontSize = useSystemFontSize
                                 )
                             )
                             SettingsScreen(
@@ -138,34 +137,55 @@ class MainActivity : FragmentActivity() {
                             )
                             
                             var existingQuote by remember { mutableStateOf<Quote?>(null) }
+                            var isQuoteLoading by remember(quoteId) { mutableStateOf(quoteId != -1L) }
                             
                             LaunchedEffect(quoteId) {
                                 if (quoteId != -1L) {
                                     existingQuote = quotesViewModel.getQuoteById(quoteId)
                                 }
+                                isQuoteLoading = false
                             }
                             
-                            if (quoteId == -1L || existingQuote != null) {
-                                QuoteDetailScreen(
-                                    quote = existingQuote,
-                                    onSave = { text, author ->
-                                        if (existingQuote != null) {
-                                            quotesViewModel.updateQuote(existingQuote!!.copy(text = text, author = author))
-                                        } else {
+                            when {
+                                quoteId == -1L -> {
+                                    QuoteDetailScreen(
+                                        quote = null,
+                                        onSave = { text, author ->
                                             quotesViewModel.addQuote(text, author)
-                                        }
-                                        navController.popBackStack()
-                                    },
-                                    onDelete = if (existingQuote != null) {
-                                        {
-                                            quotesViewModel.deleteQuote(existingQuote!!)
                                             navController.popBackStack()
-                                        }
-                                    } else {
-                                        null
-                                    },
-                                    onBack = { navController.popBackStack() }
-                                )
+                                        },
+                                        onDelete = null,
+                                        onBack = { navController.popBackStack() }
+                                    )
+                                }
+                                isQuoteLoading -> {
+                                    EditorLoadingScreen(
+                                        title = "Цитата",
+                                        onBack = { navController.popBackStack() }
+                                    )
+                                }
+                                existingQuote != null -> {
+                                    QuoteDetailScreen(
+                                        quote = existingQuote,
+                                        onSave = { text, author ->
+                                            if (existingQuote != null) {
+                                                quotesViewModel.updateQuote(existingQuote!!.copy(text = text, author = author))
+                                            } else {
+                                                quotesViewModel.addQuote(text, author)
+                                            }
+                                            navController.popBackStack()
+                                        },
+                                        onDelete = if (existingQuote != null) {
+                                            {
+                                                quotesViewModel.deleteQuote(existingQuote!!)
+                                                navController.popBackStack()
+                                            }
+                                        } else {
+                                            null
+                                        },
+                                        onBack = { navController.popBackStack() }
+                                    )
+                                }
                             }
                         }
                         composable(
@@ -183,38 +203,89 @@ class MainActivity : FragmentActivity() {
                             )
                             
                             var existingNote by remember { mutableStateOf<Note?>(null) }
+                            var isNoteLoading by remember(noteId) { mutableStateOf(noteId != -1L) }
                             
                             LaunchedEffect(noteId) {
                                 if (noteId != -1L) {
                                     existingNote = notesViewModel.getNoteById(noteId)
                                 }
+                                isNoteLoading = false
                             }
                             
-                            if (noteId == -1L || existingNote != null) {
-                                NoteDetailScreen(
-                                    note = existingNote,
-                                    onSave = { title, content ->
-                                        if (existingNote != null) {
-                                            notesViewModel.updateNote(existingNote!!.copy(title = title, content = content))
-                                        } else {
+                            when {
+                                noteId == -1L -> {
+                                    NoteDetailScreen(
+                                        note = null,
+                                        onSave = { title, content ->
                                             notesViewModel.addNote(title, content)
-                                        }
-                                        navController.popBackStack()
-                                    },
-                                    onDelete = if (existingNote != null) {
-                                        {
-                                            notesViewModel.deleteNote(existingNote!!)
                                             navController.popBackStack()
-                                        }
-                                    } else {
-                                        null
-                                    },
-                                    onBack = { navController.popBackStack() }
-                                )
+                                        },
+                                        onDelete = null,
+                                        onBack = { navController.popBackStack() }
+                                    )
+                                }
+                                isNoteLoading -> {
+                                    EditorLoadingScreen(
+                                        title = "Заметка",
+                                        onBack = { navController.popBackStack() }
+                                    )
+                                }
+                                existingNote != null -> {
+                                    NoteDetailScreen(
+                                        note = existingNote,
+                                        onSave = { title, content ->
+                                            if (existingNote != null) {
+                                                notesViewModel.updateNote(existingNote!!.copy(title = title, content = content))
+                                            } else {
+                                                notesViewModel.addNote(title, content)
+                                            }
+                                            navController.popBackStack()
+                                        },
+                                        onDelete = if (existingNote != null) {
+                                            {
+                                                notesViewModel.deleteNote(existingNote!!)
+                                                navController.popBackStack()
+                                            }
+                                        } else {
+                                            null
+                                        },
+                                        onBack = { navController.popBackStack() }
+                                    )
+                                }
                             }
+                        }
+                    }
+                }
             }
         }
     }
 }
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun EditorLoadingScreen(
+    title: String,
+    onBack: () -> Unit
+) {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(title) },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Назад")
+                    }
+                }
+            )
+        }
+    ) { innerPadding ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding),
+            contentAlignment = androidx.compose.ui.Alignment.Center
+        ) {
+            CircularProgressIndicator()
+        }
     }
 }

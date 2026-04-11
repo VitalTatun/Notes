@@ -51,7 +51,7 @@ fun QuoteDetailScreen(
             TopAppBar(
                 title = {
                     Column {
-                        Text("Цитата")
+                        Text(if (quote == null) "Новая цитата" else "Редактирование")
                         val dateText = quote?.createdAt?.formatDate() ?: System.currentTimeMillis().formatDate()
                         Text(
                             text = dateText,
