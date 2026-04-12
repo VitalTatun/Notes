@@ -85,9 +85,10 @@ fun NotesTheme(
         else -> LightColorScheme
     }
 
-    // Применяем масштабирование шрифта
+    // Применяем масштабирование шрифта, сохраняя ВСЕ параметры оригинального стиля
     val currentTypography = AppTypography
     val finalFontScale = if (useSystemFontSize) 1.0f else fontScale
+
     val scaledTypography = Typography(
         displayLarge = currentTypography.displayLarge.copy(fontSize = currentTypography.displayLarge.fontSize * finalFontScale),
         displayMedium = currentTypography.displayMedium.copy(fontSize = currentTypography.displayMedium.fontSize * finalFontScale),

@@ -110,7 +110,9 @@ fun QuoteItem(
         modifier = Modifier
             .fillMaxWidth()
             .pointerInput(onLongClick) {
-                detectTapGestures(onLongPress = { onLongClick() })
+                detectTapGestures(
+                    onLongPress = { onLongClick() }
+                )
             },
         shape = MaterialTheme.shapes.medium,
         colors = CardDefaults.cardColors(

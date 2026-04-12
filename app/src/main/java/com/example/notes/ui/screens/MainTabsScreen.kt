@@ -1,10 +1,12 @@
 package com.example.notes.ui.screens
 
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Notes
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -12,17 +14,25 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.em
+import androidx.compose.ui.unit.sp
 import com.example.notes.data.local.entities.Note
 import com.example.notes.data.local.entities.Quote
 import com.example.notes.ui.viewmodel.NotesViewModel
+import com.example.notes.ui.theme.SerifFontFamily
 import com.example.notes.ui.viewmodel.QuotesViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -99,17 +109,24 @@ fun MainTabsScreen(
         focusManager.clearFocus()
     }
 
-    val screenTitle = if (selectedTab == 0) "Заметки" else "Цитаты"
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
     Scaffold(
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         bottomBar = {
             // Оставляем пустым, чтобы управлять панелью вручную для плавной анимации
         },
         topBar = {
-            TopAppBar(
+            MediumTopAppBar(
                 title = {
                     Text(
-                        text = screenTitle,
+                        text = if (selectedTab == 0) "Заметки" else "Цитаты",
+                        style = LocalTextStyle.current.merge(
+                            TextStyle(
+                                fontFamily = SerifFontFamily,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        ),
                         maxLines = 1
                     )
                 },
@@ -127,9 +144,6 @@ fun MainTabsScreen(
                         ) {
                             Icon(Icons.Default.Close, contentDescription = "Сбросить фильтр по дате")
                         }
-                    }
-                    IconButton(onClick = { }) {
-                        Icon(Icons.Default.Search, contentDescription = "Поиск")
                     }
                     IconButton(
                         onClick = {
@@ -155,7 +169,8 @@ fun MainTabsScreen(
                     ) {
                         Icon(Icons.Default.Settings, contentDescription = "Настройки")
                     }
-                }
+                },
+                scrollBehavior = scrollBehavior
             )
         },
         floatingActionButton = {
