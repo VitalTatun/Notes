@@ -1,21 +1,49 @@
 package com.example.notes.ui.viewmodel
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.notes.data.local.entities.Quote
 import com.example.notes.data.repository.QuotesRepository
 import com.example.notes.util.isSameDay
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class QuotesViewModel(private val repository: QuotesRepository) : ViewModel() {
+@HiltViewModel
+class QuotesViewModel @Inject constructor(
+    private val repository: QuotesRepository,
+    savedStateHandle: SavedStateHandle
+) : ViewModel() {
 
+    private val quoteId: Long = savedStateHandle.get<Long>("quoteId") ?: -1L
+
+    val existingQuote: StateFlow<Quote?> = if (quoteId != -1L) {
+        flow { emit(repository.getQuoteById(quoteId)) }
+            .stateIn(viewModelScope, SharingStarted.Lazily, null)
+    } else {
+        MutableStateFlow(null).asStateFlow()
+    }
+
+    private val _searchQuery = MutableStateFlow("")
+    val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
     private val _selectedDateMillis = MutableStateFlow<Long?>(null)
     val selectedDateMillis: StateFlow<Long?> = _selectedDateMillis.asStateFlow()
 
+    @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
     val quotes: StateFlow<List<Quote>> = combine(
-        repository.allQuotes,
+        searchQuery
+            .debounce(300L)
+            .flatMapLatest { query ->
+                if (query.isBlank()) {
+                    repository.allQuotes
+                } else {
+                    repository.searchQuotes(query)
+                }
+            },
         selectedDateMillis
     ) { quotes, selectedDateMillis ->
         if (selectedDateMillis == null) {
@@ -25,6 +53,10 @@ class QuotesViewModel(private val repository: QuotesRepository) : ViewModel() {
         }
     }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    fun onSearchQueryChange(newQuery: String) {
+        _searchQuery.value = newQuery
+    }
 
     fun setSelectedDate(dateMillis: Long?) {
         _selectedDateMillis.value = dateMillis
@@ -50,15 +82,5 @@ class QuotesViewModel(private val repository: QuotesRepository) : ViewModel() {
 
     suspend fun getQuoteById(id: Long): Quote? {
         return repository.getQuoteById(id)
-    }
-
-    class Factory(private val repository: QuotesRepository) : ViewModelProvider.Factory {
-        @Suppress("UNCHECKED_CAST")
-        override fun <T : ViewModel> create(modelClass: Class<T>): T {
-            if (modelClass.isAssignableFrom(QuotesViewModel::class.java)) {
-                return QuotesViewModel(repository) as T
-            }
-            throw IllegalArgumentException("Unknown ViewModel class")
-        }
     }
 }

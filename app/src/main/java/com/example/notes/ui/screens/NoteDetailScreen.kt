@@ -2,12 +2,11 @@ package com.example.notes.ui.screens
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Done
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -28,15 +27,21 @@ fun NoteDetailScreen(
     onDelete: (() -> Unit)? = null,
     onBack: () -> Unit
 ) {
-    val initialTitle = note?.title.orEmpty()
-    val initialContent = note?.content.orEmpty()
     var title by remember { mutableStateOf(note?.title ?: "") }
     var content by remember { mutableStateOf(note?.content ?: "") }
-    val hasChanges = title != initialTitle || content != initialContent
+    
+    // Оптимизация: вычисляем состояние кнопки сохранения только при изменении полей
+    val canSave by remember(title, content, note) {
+        derivedStateOf {
+            content.isNotBlank() && (note == null || title != note.title || content != note.content)
+        }
+    }
     
     val focusRequester = remember { FocusRequester() }
     val scrollState = rememberScrollState()
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
+
+    var showDeleteDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         if (note == null) {
@@ -45,16 +50,21 @@ fun NoteDetailScreen(
     }
 
     Scaffold(
-        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        modifier = Modifier
+            .fillMaxSize()
+            .nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             TopAppBar(
                 title = {
                     Column {
-                        Text(if (note == null) "Новая заметка" else "Редактирование")
+                        Text(
+                            text = if (note == null) "Новая заметка" else "Заметка",
+                            style = MaterialTheme.typography.titleMedium
+                        )
                         val dateText = note?.createdAt?.formatDate() ?: System.currentTimeMillis().formatDate()
                         Text(
                             text = dateText,
-                            style = MaterialTheme.typography.labelMedium,
+                            style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.outline
                         )
                     }
@@ -66,113 +76,100 @@ fun NoteDetailScreen(
                 },
                 actions = {
                     if (note != null) {
-                        var showDeleteDialog by remember { mutableStateOf(false) }
                         IconButton(onClick = { showDeleteDialog = true }) {
-                            Icon(
-                                imageVector = Icons.Default.Delete,
-                                contentDescription = "Удалить заметку",
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                        if (showDeleteDialog) {
-                            AlertDialog(
-                                onDismissRequest = { showDeleteDialog = false },
-                                title = { Text("Удалить заметку?") },
-                                text = { Text("Это действие нельзя отменить.") },
-                                confirmButton = {
-                                    TextButton(
-                                        onClick = {
-                                            onDelete?.invoke()
-                                            showDeleteDialog = false
-                                        }
-                                    ) {
-                                        Text("Удалить", color = MaterialTheme.colorScheme.error)
-                                    }
-                                },
-                                dismissButton = {
-                                    TextButton(onClick = { showDeleteDialog = false }) {
-                                        Text("Отмена")
-                                    }
-                                }
-                            )
+                            Icon(Icons.Default.Delete, contentDescription = "Удалить")
                         }
                     }
-                    val isSaveEnabled = content.isNotBlank() && (note == null || hasChanges)
-                    FilledIconButton(
+                    IconButton(
                         onClick = { onSave(title, content) },
-                        enabled = isSaveEnabled,
-                        modifier = Modifier.size(width = 56.dp, height = 40.dp),
-                        shape = CircleShape,
-                        colors = IconButtonDefaults.filledIconButtonColors(
-                            containerColor = MaterialTheme.colorScheme.primary,
-                            contentColor = MaterialTheme.colorScheme.onPrimary
-                        )
+                        enabled = canSave
                     ) {
-                        Icon(Icons.Default.Check, contentDescription = "Готово")
+                        Icon(
+                            imageVector = Icons.Default.Done,
+                            contentDescription = "Сохранить",
+                            tint = if (canSave) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
+                        )
                     }
                 },
                 scrollBehavior = scrollBehavior
             )
-        }
+        },
+        contentWindowInsets = WindowInsets.systemBars
     ) { innerPadding ->
         Column(
             modifier = Modifier
-                .padding(innerPadding)
                 .fillMaxSize()
-                .imePadding()
+                .padding(innerPadding)
+                .consumeWindowInsets(innerPadding)
+                .imePadding() // Автоматический отступ для клавиатуры
                 .verticalScroll(scrollState)
         ) {
-            Column(modifier = Modifier.padding(vertical = 4.dp)) {
-                TextField(
-                    value = title,
-                    onValueChange = { title = it },
-                    placeholder = { 
-                        Text(
-                            "Заголовок", 
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
-                        ) 
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    maxLines = 3,
-                    singleLine = false,
-                    colors = TextFieldDefaults.colors(
-                        focusedContainerColor = Color.Transparent,
-                        unfocusedContainerColor = Color.Transparent,
-                        disabledContainerColor = Color.Transparent,
-                        focusedIndicatorColor = Color.Transparent,
-                        unfocusedIndicatorColor = Color.Transparent,
-                    ),
-                    textStyle = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.SemiBold)
+            TextField(
+                value = title,
+                onValueChange = { title = it },
+                placeholder = { 
+                    Text(
+                        "Заголовок", 
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                    ) 
+                },
+                modifier = Modifier.fillMaxWidth(),
+                textStyle = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = Color.Transparent,
+                    unfocusedContainerColor = Color.Transparent,
+                    focusedIndicatorColor = Color.Transparent,
+                    unfocusedIndicatorColor = Color.Transparent,
                 )
-            }
-            
-            Spacer(modifier = Modifier.height(0.dp))
+            )
             
             TextField(
                 value = content,
                 onValueChange = { content = it },
                 placeholder = { 
                     Text(
-                        "Текст заметки",
+                        "Начните писать...",
                         style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
                     ) 
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .fillMaxHeight()
+                    .weight(1f)
                     .focusRequester(focusRequester),
+                textStyle = MaterialTheme.typography.bodyLarge,
                 colors = TextFieldDefaults.colors(
                     focusedContainerColor = Color.Transparent,
                     unfocusedContainerColor = Color.Transparent,
-                    disabledContainerColor = Color.Transparent,
                     focusedIndicatorColor = Color.Transparent,
                     unfocusedIndicatorColor = Color.Transparent,
-                ),
-                textStyle = MaterialTheme.typography.bodyLarge
+                )
             )
         }
+    }
+
+    if (showDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            title = { Text("Удалить заметку?") },
+            text = { Text("Это действие нельзя будет отменить.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        onDelete?.invoke()
+                        showDeleteDialog = false
+                    }
+                ) {
+                    Text("Удалить", color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteDialog = false }) {
+                    Text("Отмена")
+                }
+            }
+        )
     }
 }

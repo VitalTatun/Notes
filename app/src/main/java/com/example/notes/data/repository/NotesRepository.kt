@@ -3,8 +3,11 @@ package com.example.notes.data.repository
 import com.example.notes.data.local.dao.NoteDao
 import com.example.notes.data.local.entities.Note
 import kotlinx.coroutines.flow.Flow
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class NotesRepository(private val noteDao: NoteDao) {
+@Singleton
+class NotesRepository @Inject constructor(private val noteDao: NoteDao) {
     val allNotes: Flow<List<Note>> = noteDao.getAllNotes()
 
     fun searchNotes(query: String): Flow<List<Note>> = noteDao.searchNotes(query)

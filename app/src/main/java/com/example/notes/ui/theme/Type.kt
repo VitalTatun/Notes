@@ -3,6 +3,7 @@ package com.example.notes.ui.theme
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.googlefonts.Font
 import androidx.compose.ui.text.googlefonts.GoogleFont
@@ -20,12 +21,21 @@ val serifFontName = GoogleFont("Noto Serif")
 
 val AppFontFamily = FontFamily(
     Font(googleFont = fontName, fontProvider = provider),
+    Font(googleFont = fontName, fontProvider = provider, style = FontStyle.Italic),
     Font(googleFont = fontName, fontProvider = provider, weight = FontWeight.Medium),
+    Font(googleFont = fontName, fontProvider = provider, weight = FontWeight.Medium, style = FontStyle.Italic),
     Font(googleFont = fontName, fontProvider = provider, weight = FontWeight.SemiBold),
-    Font(googleFont = fontName, fontProvider = provider, weight = FontWeight.Bold)
+    Font(googleFont = fontName, fontProvider = provider, weight = FontWeight.SemiBold, style = FontStyle.Italic),
+    Font(googleFont = fontName, fontProvider = provider, weight = FontWeight.Bold),
+    Font(googleFont = fontName, fontProvider = provider, weight = FontWeight.Bold, style = FontStyle.Italic)
 )
 
-val SerifFontFamily = FontFamily.Serif
+val SerifFontFamily = FontFamily(
+    Font(googleFont = serifFontName, fontProvider = provider),
+    Font(googleFont = serifFontName, fontProvider = provider, style = FontStyle.Italic),
+    Font(googleFont = serifFontName, fontProvider = provider, weight = FontWeight.Bold),
+    Font(googleFont = serifFontName, fontProvider = provider, weight = FontWeight.Bold, style = FontStyle.Italic)
+)
 
 val AppTypography = Typography(
     displayLarge = TextStyle(

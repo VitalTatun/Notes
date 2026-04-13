@@ -1,39 +1,62 @@
 package com.example.notes.ui.screens
 
 import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.Notes
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MediumTopAppBar
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.em
-import androidx.compose.ui.unit.sp
+import com.example.notes.R
 import com.example.notes.data.local.entities.Note
 import com.example.notes.data.local.entities.Quote
+import com.example.notes.ui.components.DeleteDialog
+import com.example.notes.ui.components.NotesBottomBar
 import com.example.notes.ui.viewmodel.NotesViewModel
-import com.example.notes.ui.theme.SerifFontFamily
 import com.example.notes.ui.viewmodel.QuotesViewModel
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -45,15 +68,27 @@ fun MainTabsScreen(
     onEditQuote: (Quote) -> Unit,
     onAddNote: () -> Unit,
     onAddQuote: () -> Unit,
+    onSearchQuotesClick: () -> Unit,
     onSettingsClick: () -> Unit
 ) {
-    var selectedTab by rememberSaveable { mutableIntStateOf(initialTab) }
+    val scope = rememberCoroutineScope()
+    val focusManager = LocalFocusManager.current
+    
+    val pagerState = rememberPagerState(initialPage = initialTab) { 2 }
+    val isNotesTab = pagerState.currentPage == 0
 
     val notesLazyListState = rememberLazyListState()
     val quotesLazyListState = rememberLazyListState()
 
     var isExpanded by rememberSaveable { mutableStateOf(true) }
 
+    // Константы для верстки
+    val bottomBarHeight = 80.dp
+    val fabMargin = 16.dp
+
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+
+    // Анимация скрытия FAB и BottomBar при скролле
     val fabNestedScrollConnection = remember {
         object : NestedScrollConnection {
             override fun onPostScroll(
@@ -71,9 +106,10 @@ fun MainTabsScreen(
         }
     }
 
+    // Авто-развертывание при достижении верха
     val isAtTop by remember {
         derivedStateOf {
-            val state = if (selectedTab == 0) notesLazyListState else quotesLazyListState
+            val state = if (isNotesTab) notesLazyListState else quotesLazyListState
             state.firstVisibleItemIndex == 0 && state.firstVisibleItemScrollOffset == 0
         }
     }
@@ -82,92 +118,57 @@ fun MainTabsScreen(
         if (isAtTop) isExpanded = true
     }
 
+    // Состояния диалогов
     var noteToDelete by remember { mutableStateOf<Note?>(null) }
     var quoteToDelete by remember { mutableStateOf<Quote?>(null) }
-
-    val focusManager = LocalFocusManager.current
-
-    val selectedDate = if (selectedTab == 0) {
-        notesViewModel.selectedDateMillis.collectAsState().value
-    } else {
-        quotesViewModel.selectedDateMillis.collectAsState().value
-    }
     var showDatePicker by remember { mutableStateOf(false) }
-    val bottomBarHeight = 80.dp
-    val animatedBottomPadding by animateDpAsState(
-        targetValue = if (isExpanded) bottomBarHeight else 0.dp,
-        label = "bottomBarPadding"
-    )
+
+    // Данные о датах
+    val selectedDateNotes by notesViewModel.selectedDateMillis.collectAsState()
+    val selectedDateQuotes by quotesViewModel.selectedDateMillis.collectAsState()
+    val currentSelectedDate = if (isNotesTab) selectedDateNotes else selectedDateQuotes
 
     val animatedFabOffsetY by animateDpAsState(
-        targetValue = if (isExpanded) -bottomBarHeight - 16.dp else -16.dp,
+        targetValue = if (isExpanded) -(bottomBarHeight + fabMargin) else -fabMargin,
         label = "fabOffsetY"
     )
 
-    LaunchedEffect(selectedTab) {
-        isExpanded = true
-        focusManager.clearFocus()
-    }
-
-    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
-
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        bottomBar = {
-            // Оставляем пустым, чтобы управлять панелью вручную для плавной анимации
-        },
         topBar = {
             MediumTopAppBar(
                 title = {
-                    Text(
-                        text = if (selectedTab == 0) "Заметки" else "Цитаты",
-                        style = LocalTextStyle.current.merge(
-                            TextStyle(
-                                fontFamily = SerifFontFamily,
-                                fontWeight = FontWeight.SemiBold
-                            )
-                        ),
-                        maxLines = 1
-                    )
+                    Text(text = stringResource(if (isNotesTab) R.string.notes else R.string.quotes))
                 },
                 actions = {
-                    if (selectedDate != null) {
+                    if (!isNotesTab) {
+                        IconButton(onClick = onSearchQuotesClick) {
+                            Icon(Icons.Default.Search, contentDescription = stringResource(R.string.search))
+                        }
+                    }
+                    
+                    if (currentSelectedDate != null) {
                         IconButton(
                             onClick = {
-                                focusManager.clearFocus()
-                                if (selectedTab == 0) {
-                                    notesViewModel.setSelectedDate(null)
-                                } else {
-                                    quotesViewModel.setSelectedDate(null)
-                                }
+                                if (isNotesTab) notesViewModel.setSelectedDate(null)
+                                else quotesViewModel.setSelectedDate(null)
                             }
                         ) {
-                            Icon(Icons.Default.Close, contentDescription = "Сбросить фильтр по дате")
+                            Icon(Icons.Default.Close, contentDescription = stringResource(R.string.reset_date))
                         }
                     }
-                    IconButton(
-                        onClick = {
-                            focusManager.clearFocus()
-                            showDatePicker = true
-                        }
-                    ) {
+
+                    IconButton(onClick = { showDatePicker = true }) {
                         Icon(
                             imageVector = Icons.Default.DateRange,
-                            contentDescription = "Фильтр по дате",
-                            tint = if (selectedDate != null) {
-                                MaterialTheme.colorScheme.primary
-                            } else {
-                                LocalContentColor.current
-                            }
+                            contentDescription = stringResource(R.string.date),
+                            tint = if (currentSelectedDate != null) MaterialTheme.colorScheme.primary
+                                   else LocalContentColor.current
                         )
                     }
-                    IconButton(
-                        onClick = {
-                            focusManager.clearFocus()
-                            onSettingsClick()
-                        }
-                    ) {
-                        Icon(Icons.Default.Settings, contentDescription = "Настройки")
+
+                    IconButton(onClick = onSettingsClick) {
+                        Icon(Icons.Default.Settings, contentDescription = stringResource(R.string.settings))
                     }
                 },
                 scrollBehavior = scrollBehavior
@@ -176,153 +177,101 @@ fun MainTabsScreen(
         floatingActionButton = {
             ExtendedFloatingActionButton(
                 modifier = Modifier.offset(y = animatedFabOffsetY),
-                onClick = {
-                    focusManager.clearFocus()
-                    if (selectedTab == 0) onAddNote() else onAddQuote()
-                },
+                onClick = { if (isNotesTab) onAddNote() else onAddQuote() },
                 expanded = isExpanded,
                 icon = { Icon(Icons.Default.Add, contentDescription = null) },
-                text = { 
-                    Text(
-                        text = if (selectedTab == 0) "Заметка" else "Цитата",
-                        style = MaterialTheme.typography.titleMedium,
-                        maxLines = 1,
-                        softWrap = false
-                    ) 
-                }
+                text = { Text(stringResource(if (isNotesTab) R.string.add_note else R.string.add_quote)) }
             )
         }
     ) { innerPadding ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
+                .padding(top = innerPadding.calculateTopPadding())
                 .pointerInput(Unit) {
                     detectTapGestures(onTap = { focusManager.clearFocus() })
                 }
-                .padding(top = innerPadding.calculateTopPadding())
         ) {
-            Surface(
+            HorizontalPager(
+                state = pagerState,
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(bottom = animatedBottomPadding)
+                    .padding(bottom = if (isExpanded) bottomBarHeight else 0.dp)
                     .nestedScroll(fabNestedScrollConnection)
-            ) {
-                if (selectedTab == 0) {
-                    val notes by notesViewModel.notes.collectAsState()
-                    NotesScreen(
-                        notes = notes,
-                        onEditClick = onEditNote,
-                        onDeleteConfirm = { noteToDelete = it },
-                        lazyListState = notesLazyListState
-                    )
-                } else {
-                    val quotes by quotesViewModel.quotes.collectAsState()
-                    QuotesScreen(
-                        quotes = quotes,
-                        onEditClick = onEditQuote,
-                        onDeleteConfirm = { quoteToDelete = it },
-                        lazyListState = quotesLazyListState
-                    )
+            ) { page ->
+                when (page) {
+                    0 -> {
+                        val notes by notesViewModel.notes.collectAsState()
+                        NotesScreen(
+                            notes = notes,
+                            onEditClick = onEditNote,
+                            onDeleteConfirm = { noteToDelete = it },
+                            lazyListState = notesLazyListState
+                        )
+                    }
+                    1 -> {
+                        val quotes by quotesViewModel.quotes.collectAsState()
+                        QuotesScreen(
+                            quotes = quotes,
+                            onEditClick = onEditQuote,
+                            onDeleteConfirm = { quoteToDelete = it },
+                            lazyListState = quotesLazyListState
+                        )
+                    }
                 }
             }
 
-            // Ручное управление NavigationBar для плавности
-            Box(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .offset(y = if (isExpanded) 0.dp else bottomBarHeight)
-                    .alpha(if (isExpanded) 1f else 0f)
-            ) {
-                NavigationBar {
-                    NavigationBarItem(
-                        selected = selectedTab == 0,
-                        onClick = { selectedTab = 0 },
-                        icon = { Icon(Icons.AutoMirrored.Filled.Notes, contentDescription = null) },
-                        label = { Text("Заметки") }
-                    )
-                    NavigationBarItem(
-                        selected = selectedTab == 1,
-                        onClick = { selectedTab = 1 },
-                        icon = { Icon(Icons.Default.FormatQuote, contentDescription = null) },
-                        label = { Text("Цитаты") }
-                    )
-                }
-            }
+            NotesBottomBar(
+                selectedTab = pagerState.currentPage,
+                onTabSelected = { tab ->
+                    scope.launch { pagerState.animateScrollToPage(tab) }
+                },
+                isExpanded = isExpanded,
+                bottomBarHeight = bottomBarHeight,
+                modifier = Modifier.align(Alignment.BottomCenter)
+            )
         }
     }
 
     if (showDatePicker) {
-        val datePickerState = rememberDatePickerState(
-            initialSelectedDateMillis = selectedDate
-        )
+        val datePickerState = rememberDatePickerState(initialSelectedDateMillis = currentSelectedDate)
         DatePickerDialog(
             onDismissRequest = { showDatePicker = false },
             confirmButton = {
-                TextButton(
-                    onClick = {
-                        val pickedDate = datePickerState.selectedDateMillis
-                        if (selectedTab == 0) {
-                            notesViewModel.setSelectedDate(pickedDate)
-                        } else {
-                            quotesViewModel.setSelectedDate(pickedDate)
-                        }
-                        showDatePicker = false
-                    }
-                ) {
-                    Text("Выбрать")
-                }
+                TextButton(onClick = {
+                    val date = datePickerState.selectedDateMillis
+                    if (isNotesTab) notesViewModel.setSelectedDate(date)
+                    else quotesViewModel.setSelectedDate(date)
+                    showDatePicker = false
+                }) { Text(stringResource(R.string.ok)) }
             },
             dismissButton = {
                 TextButton(onClick = { showDatePicker = false }) {
-                    Text("Отмена")
+                    Text(stringResource(R.string.cancel))
                 }
             }
-        ) {
-            DatePicker(state = datePickerState)
-        }
+        ) { DatePicker(state = datePickerState) }
     }
 
-    // Диалог удаления заметки
-    if (noteToDelete != null) {
-        AlertDialog(
-            onDismissRequest = { noteToDelete = null },
-            title = { Text("Удалить заметку?") },
-            text = { Text("Это действие нельзя будет отменить.") },
-            confirmButton = {
-                TextButton(onClick = {
-                    notesViewModel.deleteNote(noteToDelete!!)
-                    noteToDelete = null
-                }) {
-                    Text("Удалить", color = MaterialTheme.colorScheme.error)
-                }
+    noteToDelete?.let { note ->
+        DeleteDialog(
+            title = stringResource(R.string.delete_note_title),
+            onConfirm = {
+                notesViewModel.deleteNote(note)
+                noteToDelete = null
             },
-            dismissButton = {
-                TextButton(onClick = { noteToDelete = null }) {
-                    Text("Отмена")
-                }
-            }
+            onDismiss = { noteToDelete = null }
         )
     }
 
-    // Диалог удаления цитаты
-    if (quoteToDelete != null) {
-        AlertDialog(
-            onDismissRequest = { quoteToDelete = null },
-            title = { Text("Удалить цитату?") },
-            text = { Text("Это действие нельзя будет отменить.") },
-            confirmButton = {
-                TextButton(onClick = {
-                    quotesViewModel.deleteQuote(quoteToDelete!!)
-                    quoteToDelete = null
-                }) {
-                    Text("Удалить", color = MaterialTheme.colorScheme.error)
-                }
+    quoteToDelete?.let { quote ->
+        DeleteDialog(
+            title = stringResource(R.string.delete_quote_title),
+            onConfirm = {
+                quotesViewModel.deleteQuote(quote)
+                quoteToDelete = null
             },
-            dismissButton = {
-                TextButton(onClick = { quoteToDelete = null }) {
-                    Text("Отмена")
-                }
-            }
+            onDismiss = { quoteToDelete = null }
         )
     }
 }

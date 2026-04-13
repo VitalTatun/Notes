@@ -1,3 +1,15 @@
 <resources>
     <string name="app_name">Notes</string>
+    <string name="notes">Заметки</string>
+    <string name="quotes">Цитаты</string>
+    <string name="date">Дата</string>
+    <string name="search">Поиск</string>
+    <string name="reset_date">Сбросить дату</string>
+    <string name="settings">Настройки</string>
+    <string name="add_note">Заметка</string>
+    <string name="add_quote">Цитата</string>
+    <string name="delete_note_title">Удалить заметку?</string>
+    <string name="delete_quote_title">Удалить цитату?</string>
+    <string name="ok">ОК</string>
+    <string name="cancel">Отмена</string>
 </resources>

@@ -136,7 +136,9 @@ fun NoteItem(
                 Spacer(modifier = Modifier.height(10.dp))
                 Text(
                     text = note.content,
-                    style = MaterialTheme.typography.bodyLarge,
+                    style = MaterialTheme.typography.bodyLarge.copy(
+                        fontFamily = MaterialTheme.typography.displayMedium.fontFamily
+                    ),
                     color = MaterialTheme.colorScheme.onSurface,
                     lineHeight = MaterialTheme.typography.bodyLarge.lineHeight
                 )

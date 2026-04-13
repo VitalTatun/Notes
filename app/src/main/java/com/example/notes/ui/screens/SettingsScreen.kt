@@ -29,7 +29,7 @@ fun SettingsScreen(
     var showDeleteConfirmDialog by remember { mutableStateOf(false) }
     var showImportModeDialog by remember { mutableStateOf(false) }
     var importReplaceMode by remember { mutableStateOf(false) }
-    
+
     val importLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument()
     ) { uri ->
@@ -67,7 +67,7 @@ fun SettingsScreen(
                 .verticalScroll(rememberScrollState())
         ) {
             SettingsSectionTitle("Внешний вид")
-            
+
             ThemeOption("Системная", "SYSTEM", uiState.themeMode) { viewModel.setThemeMode(it) }
             ThemeOption("Светлая", "LIGHT", uiState.themeMode) { viewModel.setThemeMode(it) }
             ThemeOption("Темная", "DARK", uiState.themeMode) { viewModel.setThemeMode(it) }
@@ -80,7 +80,7 @@ fun SettingsScreen(
                 checked = uiState.useSystemFontSize,
                 onCheckedChange = { viewModel.setUseSystemFontSize(it) }
             )
-            
+
             if (!uiState.useSystemFontSize) {
                 Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
                     Row(
@@ -101,14 +101,14 @@ fun SettingsScreen(
             }
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-            
+
             SettingsSectionTitle("Данные")
-            
+
             SettingsClickableItem(
                 title = "Экспорт всех записей (JSON)",
                 onClick = { viewModel.exportData(context) }
             )
-            
+
             SettingsClickableItem(
                 title = "Импорт из файла",
                 onClick = { showImportModeDialog = true }

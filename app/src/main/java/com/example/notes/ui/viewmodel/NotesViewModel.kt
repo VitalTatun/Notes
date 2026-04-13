@@ -1,17 +1,33 @@
 package com.example.notes.ui.viewmodel
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.notes.data.local.entities.Note
 import com.example.notes.data.repository.NotesRepository
+import com.example.notes.ui.navigation.Screen
 import com.example.notes.util.isSameDay
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class NotesViewModel(private val repository: NotesRepository) : ViewModel() {
+@HiltViewModel
+class NotesViewModel @Inject constructor(
+    private val repository: NotesRepository,
+    savedStateHandle: SavedStateHandle
+) : ViewModel() {
+
+    private val noteId: Long = savedStateHandle.get<Long>("noteId") ?: -1L
+    
+    val existingNote: StateFlow<Note?> = if (noteId != -1L) {
+        flow { emit(repository.getNoteById(noteId)) }
+            .stateIn(viewModelScope, SharingStarted.Lazily, null)
+    } else {
+        MutableStateFlow(null).asStateFlow()
+    }
 
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
@@ -67,15 +83,5 @@ class NotesViewModel(private val repository: NotesRepository) : ViewModel() {
 
     suspend fun getNoteById(id: Long): Note? {
         return repository.getNoteById(id)
-    }
-
-    class Factory(private val repository: NotesRepository) : ViewModelProvider.Factory {
-        @Suppress("UNCHECKED_CAST")
-        override fun <T : ViewModel> create(modelClass: Class<T>): T {
-            if (modelClass.isAssignableFrom(NotesViewModel::class.java)) {
-                return NotesViewModel(repository) as T
-            }
-            throw IllegalArgumentException("Unknown ViewModel class")
-        }
     }
 }

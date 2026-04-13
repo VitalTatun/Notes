@@ -3,12 +3,12 @@ package com.example.notes.ui.viewmodel
 import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.notes.data.repository.NotesRepository
 import com.example.notes.data.repository.QuotesRepository
 import com.example.notes.data.repository.UserPreferencesRepository
 import com.example.notes.util.ShareUtils
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import org.json.JSONArray
@@ -16,6 +16,7 @@ import org.json.JSONObject
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.util.concurrent.TimeUnit
+import javax.inject.Inject
 
 data class SettingsUiState(
     val themeMode: String = "SYSTEM",
@@ -26,21 +27,14 @@ data class SettingsUiState(
     val isLoading: Boolean = true
 )
 
-class SettingsViewModel(
+@HiltViewModel
+class SettingsViewModel @Inject constructor(
     private val prefsRepository: UserPreferencesRepository,
     private val notesRepository: NotesRepository,
-    private val quotesRepository: QuotesRepository,
-    initialThemeMode: String = "SYSTEM",
-    initialFontScale: Float = 1.0f,
-    initialUseSystemFontSize: Boolean = true
+    private val quotesRepository: QuotesRepository
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(SettingsUiState(
-        themeMode = initialThemeMode,
-        fontScale = initialFontScale,
-        useSystemFontSize = initialUseSystemFontSize,
-        isLoading = true
-    ))
+    private val _uiState = MutableStateFlow(SettingsUiState(isLoading = true))
     val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
 
     init {
@@ -219,27 +213,6 @@ class SettingsViewModel(
             } catch (e: Exception) {
                 _uiState.update { it.copy(error = "Ошибка при добавлении: ${e.message}") }
             }
-        }
-    }
-
-    class Factory(
-        private val prefsRepository: UserPreferencesRepository,
-        private val notesRepository: NotesRepository,
-        private val quotesRepository: QuotesRepository,
-        private val initialThemeMode: String = "SYSTEM",
-        private val initialFontScale: Float = 1.0f,
-        private val initialUseSystemFontSize: Boolean = true
-    ) : ViewModelProvider.Factory {
-        @Suppress("UNCHECKED_CAST")
-        override fun <T : ViewModel> create(modelClass: Class<T>): T {
-            return SettingsViewModel(
-                prefsRepository, 
-                notesRepository, 
-                quotesRepository,
-                initialThemeMode,
-                initialFontScale,
-                initialUseSystemFontSize
-            ) as T
         }
     }
 }

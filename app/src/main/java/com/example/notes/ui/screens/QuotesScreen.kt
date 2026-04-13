@@ -20,8 +20,11 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.notes.data.local.entities.Quote
+import com.example.notes.ui.theme.NotesTheme
 import com.example.notes.util.formatDate
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -30,7 +33,8 @@ fun QuotesScreen(
     quotes: List<Quote>,
     onEditClick: (Quote) -> Unit,
     onDeleteConfirm: (Quote) -> Unit,
-    lazyListState: LazyListState = rememberLazyListState()
+    lazyListState: LazyListState = rememberLazyListState(),
+    emptyMessage: String = "Цитат пока нет"
 ) {
     val clipboardManager = LocalClipboardManager.current
     
@@ -40,7 +44,7 @@ fun QuotesScreen(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
-                Text("Цитат пока нет", style = MaterialTheme.typography.bodyLarge)
+                Text(emptyMessage, style = MaterialTheme.typography.bodyLarge)
             }
         } else {
             LazyColumn(
@@ -122,7 +126,9 @@ fun QuoteItem(
         Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp)) {
             Text(
                 text = "\"${quote.text}\"",
-                style = MaterialTheme.typography.bodyLarge,
+                style = MaterialTheme.typography.bodyLarge.copy(
+                    fontFamily = MaterialTheme.typography.displayMedium.fontFamily // Используем Serif
+                ),
                 fontStyle = FontStyle.Italic,
                 modifier = Modifier.fillMaxWidth(),
                 color = MaterialTheme.colorScheme.onSurface,
@@ -149,6 +155,52 @@ fun QuoteItem(
                     textAlign = TextAlign.End
                 )
             }
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun QuotesScreenPreview() {
+    NotesTheme {
+        QuotesScreen(
+            quotes = listOf(
+                Quote(1, "Первая цитата для примера в списке.", "Автор 1"),
+                Quote(2, "Вторая цитата, которая немного длиннее, чтобы увидеть как работает перенос строк в карточке.", "Автор 2"),
+                Quote(3, "Третья цитата.", "Автор 3")
+            ),
+            onEditClick = {},
+            onDeleteConfirm = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun QuotesScreenEmptyPreview() {
+    NotesTheme {
+        QuotesScreen(
+            quotes = emptyList(),
+            onEditClick = {},
+            onDeleteConfirm = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun QuoteItemPreview() {
+    NotesTheme {
+        Box(modifier = Modifier.padding(16.dp)) {
+            QuoteItem(
+                quote = Quote(
+                    id = 1,
+                    text = "Это пример цитаты для превью. Она может быть довольно длинной, чтобы проверить перенос строк.",
+                    author = "Автор Цитаты",
+                    createdAt = System.currentTimeMillis()
+                ),
+                onLongClick = {}
+            )
         }
     }
 }
