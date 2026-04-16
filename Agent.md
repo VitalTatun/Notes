@@ -18,11 +18,14 @@ This project follows the modern Android development practices outlined in the [A
 - **Database:** `androidx.room:room-ktx`
 
 ## 🧠 Development Philosophy
-1. **State Hoisting:** Keep composables stateless where possible.
-2. **UDF (Unidirectional Data Flow):** Events go up, state goes down.
-3. **Edge-to-Edge:** Use `WindowInsets` for full-screen experience.
-4. **Performance:** Use `derivedStateOf` and `remember` to optimize recompositions.
-5. **Stability:** Always use `StateFlow` in ViewModels with `stateIn`.
+This project follows the **Compose Expert** guidelines (see `skills/compose-expert/SKILL.md`):
+1. **Three Phases:** Composition -> Layout -> Drawing.
+2. **State Hoisting:** Keep composables stateless where possible.
+3. **Performance:** Use `derivedStateOf`, `remember`, and stable types to minimize recompositions.
+4. **Modifier Order:** Follow the "Layout-then-Action" rule (e.g., `padding` before `clickable`).
+5. **Modern Navigation:** 100% Type-safe navigation using `@Serializable` routes.
+6. **Stability:** Always use `StateFlow` in ViewModels with `stateIn`.
+7. **Atomic Design:** Build components as Atoms, Molecules, or Organisms with standard contracts (Modifier, Slots, Tokens).
 
 ## 📁 Project Structure
 - `com.example.notes.data`: Repositories and Local DB.

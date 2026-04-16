@@ -15,30 +15,9 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.DatePicker
-import androidx.compose.material3.DatePickerDialog
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExtendedFloatingActionButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.LocalContentColor
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MediumTopAppBar
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.rememberDatePickerState
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -49,6 +28,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.notes.R
 import com.example.notes.data.local.entities.Note
 import com.example.notes.data.local.entities.Quote
@@ -73,161 +53,135 @@ fun MainTabsScreen(
 ) {
     val scope = rememberCoroutineScope()
     val focusManager = LocalFocusManager.current
-    
     val pagerState = rememberPagerState(initialPage = initialTab) { 2 }
     val isNotesTab = pagerState.currentPage == 0
 
     val notesLazyListState = rememberLazyListState()
     val quotesLazyListState = rememberLazyListState()
 
-    var isExpanded by rememberSaveable { mutableStateOf(true) }
+    val notes by notesViewModel.notes.collectAsStateWithLifecycle()
+    val quotes by quotesViewModel.quotes.collectAsStateWithLifecycle()
+    val selectedNoteDate by notesViewModel.selectedDateMillis.collectAsStateWithLifecycle()
+    val selectedQuoteDate by quotesViewModel.selectedDateMillis.collectAsStateWithLifecycle()
 
-    // Константы для верстки
-    val bottomBarHeight = 80.dp
-    val fabMargin = 16.dp
-
+    var isUIExpanded by rememberSaveable { mutableStateOf(true) }
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
-    // Анимация скрытия FAB и BottomBar при скролле
-    val fabNestedScrollConnection = remember {
+    val currentLazyListState = remember(isNotesTab) {
+        if (isNotesTab) notesLazyListState else quotesLazyListState
+    }
+
+    val isAtTop by remember {
+        derivedStateOf {
+            currentLazyListState.firstVisibleItemIndex == 0 && 
+            currentLazyListState.firstVisibleItemScrollOffset == 0
+        }
+    }
+
+    LaunchedEffect(isAtTop) { if (isAtTop) isUIExpanded = true }
+
+    val nestedScrollConnection = remember {
         object : NestedScrollConnection {
-            override fun onPostScroll(
-                consumed: Offset,
-                available: Offset,
-                source: NestedScrollSource
-            ): Offset {
-                if (consumed.y < -15f && isExpanded) {
-                    isExpanded = false
-                } else if (consumed.y > 15f && !isExpanded) {
-                    isExpanded = true
-                }
+            override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset {
+                if (consumed.y < -15f && isUIExpanded) isUIExpanded = false
+                else if (consumed.y > 15f && !isUIExpanded) isUIExpanded = true
                 return super.onPostScroll(consumed, available, source)
             }
         }
     }
 
-    // Авто-развертывание при достижении верха
-    val isAtTop by remember {
-        derivedStateOf {
-            val state = if (isNotesTab) notesLazyListState else quotesLazyListState
-            state.firstVisibleItemIndex == 0 && state.firstVisibleItemScrollOffset == 0
-        }
-    }
-
-    LaunchedEffect(isAtTop) {
-        if (isAtTop) isExpanded = true
-    }
-
-    // Состояния диалогов
     var noteToDelete by remember { mutableStateOf<Note?>(null) }
     var quoteToDelete by remember { mutableStateOf<Quote?>(null) }
     var showDatePicker by remember { mutableStateOf(false) }
 
-    // Данные о датах
-    val selectedDateNotes by notesViewModel.selectedDateMillis.collectAsState()
-    val selectedDateQuotes by quotesViewModel.selectedDateMillis.collectAsState()
-    val currentSelectedDate = if (isNotesTab) selectedDateNotes else selectedDateQuotes
+    val currentSelectedDate = if (isNotesTab) selectedNoteDate else selectedQuoteDate
 
     val animatedFabOffsetY by animateDpAsState(
-        targetValue = if (isExpanded) -(bottomBarHeight + fabMargin) else -fabMargin,
+        targetValue = if (isUIExpanded) (-80).dp else 0.dp,
         label = "fabOffsetY"
+    )
+
+    val animatedBottomPadding by animateDpAsState(
+        targetValue = if (isUIExpanded) 80.dp else 0.dp,
+        label = "bottomPadding"
     )
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             MediumTopAppBar(
-                title = {
-                    Text(text = stringResource(if (isNotesTab) R.string.notes else R.string.quotes))
-                },
+                title = { Text(stringResource(if (isNotesTab) R.string.notes else R.string.quotes)) },
                 actions = {
                     if (!isNotesTab) {
                         IconButton(onClick = onSearchQuotesClick) {
-                            Icon(Icons.Default.Search, contentDescription = stringResource(R.string.search))
+                            Icon(Icons.Default.Search, stringResource(R.string.search))
                         }
                     }
-                    
                     if (currentSelectedDate != null) {
-                        IconButton(
-                            onClick = {
-                                if (isNotesTab) notesViewModel.setSelectedDate(null)
-                                else quotesViewModel.setSelectedDate(null)
-                            }
-                        ) {
-                            Icon(Icons.Default.Close, contentDescription = stringResource(R.string.reset_date))
+                        IconButton(onClick = {
+                            if (isNotesTab) notesViewModel.setSelectedDate(null)
+                            else quotesViewModel.setSelectedDate(null)
+                        }) {
+                            Icon(Icons.Default.Close, stringResource(R.string.reset_date))
                         }
                     }
-
                     IconButton(onClick = { showDatePicker = true }) {
                         Icon(
                             imageVector = Icons.Default.DateRange,
                             contentDescription = stringResource(R.string.date),
-                            tint = if (currentSelectedDate != null) MaterialTheme.colorScheme.primary
-                                   else LocalContentColor.current
+                            tint = if (currentSelectedDate != null) MaterialTheme.colorScheme.primary else LocalContentColor.current
                         )
                     }
-
                     IconButton(onClick = onSettingsClick) {
-                        Icon(Icons.Default.Settings, contentDescription = stringResource(R.string.settings))
+                        Icon(Icons.Default.Settings, stringResource(R.string.settings))
                     }
                 },
                 scrollBehavior = scrollBehavior
             )
         },
         floatingActionButton = {
-            ExtendedFloatingActionButton(
+            FloatingActionButton(
                 modifier = Modifier.offset(y = animatedFabOffsetY),
-                onClick = { if (isNotesTab) onAddNote() else onAddQuote() },
-                expanded = isExpanded,
-                icon = { Icon(Icons.Default.Add, contentDescription = null) },
-                text = { Text(stringResource(if (isNotesTab) R.string.add_note else R.string.add_quote)) }
-            )
-        }
+                onClick = { if (isNotesTab) onAddNote() else onAddQuote() }
+            ) {
+                Icon(Icons.Default.Add, contentDescription = stringResource(if (isNotesTab) R.string.add_note else R.string.add_quote))
+            }
+        },
+        floatingActionButtonPosition = FabPosition.End
     ) { innerPadding ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(top = innerPadding.calculateTopPadding())
-                .pointerInput(Unit) {
-                    detectTapGestures(onTap = { focusManager.clearFocus() })
-                }
+                .pointerInput(Unit) { detectTapGestures(onTap = { focusManager.clearFocus() }) }
         ) {
             HorizontalPager(
                 state = pagerState,
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(bottom = if (isExpanded) bottomBarHeight else 0.dp)
-                    .nestedScroll(fabNestedScrollConnection)
+                    .padding(bottom = animatedBottomPadding)
+                    .nestedScroll(nestedScrollConnection)
             ) { page ->
                 when (page) {
-                    0 -> {
-                        val notes by notesViewModel.notes.collectAsState()
-                        NotesScreen(
-                            notes = notes,
-                            onEditClick = onEditNote,
-                            onDeleteConfirm = { noteToDelete = it },
-                            lazyListState = notesLazyListState
-                        )
-                    }
-                    1 -> {
-                        val quotes by quotesViewModel.quotes.collectAsState()
-                        QuotesScreen(
-                            quotes = quotes,
-                            onEditClick = onEditQuote,
-                            onDeleteConfirm = { quoteToDelete = it },
-                            lazyListState = quotesLazyListState
-                        )
-                    }
+                    0 -> NotesScreen(
+                        notes = notes,
+                        onEditClick = onEditNote,
+                        onDeleteConfirm = { noteToDelete = it },
+                        lazyListState = notesLazyListState
+                    )
+                    1 -> QuotesScreen(
+                        quotes = quotes,
+                        onEditClick = onEditQuote,
+                        onDeleteConfirm = { quoteToDelete = it },
+                        lazyListState = quotesLazyListState
+                    )
                 }
             }
 
             NotesBottomBar(
                 selectedTab = pagerState.currentPage,
-                onTabSelected = { tab ->
-                    scope.launch { pagerState.animateScrollToPage(tab) }
-                },
-                isExpanded = isExpanded,
-                bottomBarHeight = bottomBarHeight,
+                onTabSelected = { tab -> scope.launch { pagerState.animateScrollToPage(tab) } },
+                isExpanded = isUIExpanded,
                 modifier = Modifier.align(Alignment.BottomCenter)
             )
         }
@@ -240,26 +194,18 @@ fun MainTabsScreen(
             confirmButton = {
                 TextButton(onClick = {
                     val date = datePickerState.selectedDateMillis
-                    if (isNotesTab) notesViewModel.setSelectedDate(date)
-                    else quotesViewModel.setSelectedDate(date)
+                    if (isNotesTab) notesViewModel.setSelectedDate(date) else quotesViewModel.setSelectedDate(date)
                     showDatePicker = false
                 }) { Text(stringResource(R.string.ok)) }
             },
-            dismissButton = {
-                TextButton(onClick = { showDatePicker = false }) {
-                    Text(stringResource(R.string.cancel))
-                }
-            }
+            dismissButton = { TextButton(onClick = { showDatePicker = false }) { Text(stringResource(R.string.cancel)) } }
         ) { DatePicker(state = datePickerState) }
     }
 
     noteToDelete?.let { note ->
         DeleteDialog(
             title = stringResource(R.string.delete_note_title),
-            onConfirm = {
-                notesViewModel.deleteNote(note)
-                noteToDelete = null
-            },
+            onConfirm = { notesViewModel.deleteNote(note); noteToDelete = null },
             onDismiss = { noteToDelete = null }
         )
     }
@@ -267,10 +213,7 @@ fun MainTabsScreen(
     quoteToDelete?.let { quote ->
         DeleteDialog(
             title = stringResource(R.string.delete_quote_title),
-            onConfirm = {
-                quotesViewModel.deleteQuote(quote)
-                quoteToDelete = null
-            },
+            onConfirm = { quotesViewModel.deleteQuote(quote); quoteToDelete = null },
             onDismiss = { quoteToDelete = null }
         )
     }

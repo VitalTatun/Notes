@@ -3,6 +3,7 @@ package com.example.notes.ui.viewmodel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.navigation.toRoute
 import com.example.notes.data.local.entities.Note
 import com.example.notes.data.repository.NotesRepository
 import com.example.notes.ui.navigation.Screen
@@ -20,11 +21,11 @@ class NotesViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
-    private val noteId: Long = savedStateHandle.get<Long>("noteId") ?: -1L
+    val noteId: Long = savedStateHandle.toRoute<Screen.NoteDetail>().noteId
     
     val existingNote: StateFlow<Note?> = if (noteId != -1L) {
-        flow { emit(repository.getNoteById(noteId)) }
-            .stateIn(viewModelScope, SharingStarted.Lazily, null)
+        repository.getNoteByIdFlow(noteId)
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
     } else {
         MutableStateFlow(null).asStateFlow()
     }
