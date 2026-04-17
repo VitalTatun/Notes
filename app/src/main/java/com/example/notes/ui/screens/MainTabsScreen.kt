@@ -1,7 +1,7 @@
 package com.example.notes.ui.screens
 
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
@@ -16,6 +16,7 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -35,7 +36,6 @@ import com.example.notes.ui.theme.NotesTheme
 import com.example.notes.ui.viewmodel.NotesViewModel
 import com.example.notes.ui.viewmodel.QuotesViewModel
 import com.example.notes.util.formatFilterDate
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -151,7 +151,7 @@ fun MainTabsContent(
     val quotesLazyListState = rememberLazyListState()
 
     var isUIExpanded by rememberSaveable { mutableStateOf(true) }
-    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
 
     val currentLazyListState = remember(isNotesTab) {
         if (isNotesTab) notesLazyListState else quotesLazyListState
@@ -179,7 +179,7 @@ fun MainTabsContent(
     Scaffold(
         modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
-            MediumTopAppBar(
+            TopAppBar(
                 title = {
                     Text(
                         text = stringResource(if (isNotesTab) R.string.notes else R.string.quotes),
@@ -221,10 +221,19 @@ fun MainTabsContent(
         },
         floatingActionButton = {
             val haptic = LocalHapticFeedback.current
+            val translationY by animateFloatAsState(
+                targetValue = if (isUIExpanded) 0f else 80f,
+                // animationSpec = spring(stiffness = Spring.StiffnessLow),
+                label = "FAB Translation"
+            )
+
             FloatingActionButton(
                 onClick = { 
                     haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
                     onAddClick() 
+                },
+                modifier = Modifier.graphicsLayer {
+                    this.translationY = translationY.dp.toPx()
                 },
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary,
