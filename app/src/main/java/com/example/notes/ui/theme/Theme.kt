@@ -32,7 +32,8 @@ private val DarkColorScheme by lazy {
         onSurface = OnSurfaceDark,
         surfaceVariant = SurfaceVariantDark,
         onSurfaceVariant = OnSurfaceVariantDark,
-        outline = OutlineDark
+        outline = OutlineDark,
+        outlineVariant = OutlineVariantDark
     )
 }
 
@@ -60,17 +61,17 @@ private val LightColorScheme by lazy {
         onSurface = OnSurfaceLight,
         surfaceVariant = SurfaceVariantLight,
         onSurfaceVariant = OnSurfaceVariantLight,
-        outline = OutlineLight
+        outline = OutlineLight,
+        outlineVariant = OutlineVariantLight
     )
 }
 
 @Composable
 fun NotesTheme(
-    themeMode: String = "SYSTEM",
+    themeMode: String = "LIGHT", // Default to LIGHT for the Lavender look
     fontScale: Float = 1.0f,
     useSystemFontSize: Boolean = true,
-    // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
+    dynamicColor: Boolean = false, // Disable dynamic colors to enforce the Lavender palette
     content: @Composable () -> Unit
 ) {
     val darkTheme = when (themeMode) {

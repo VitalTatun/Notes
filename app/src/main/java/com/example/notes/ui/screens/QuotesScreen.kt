@@ -1,6 +1,6 @@
 package com.example.notes.ui.screens
 
-import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
@@ -14,7 +14,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontStyle
@@ -23,6 +22,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.material.icons.filled.FormatQuote
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
 import com.example.notes.data.local.entities.Quote
 import com.example.notes.ui.theme.NotesTheme
 import com.example.notes.util.formatDate
@@ -34,32 +37,48 @@ fun QuotesScreen(
     onEditClick: (Quote) -> Unit,
     onDeleteConfirm: (Quote) -> Unit,
     lazyListState: LazyListState = rememberLazyListState(),
-    emptyMessage: String = "Цитат пока нет"
+    emptyMessage: String = "Цитат пока нет",
+    contentPadding: PaddingValues = PaddingValues(0.dp)
 ) {
     val clipboardManager = LocalClipboardManager.current
     
-    Column(modifier = Modifier.fillMaxSize()) {
+    Box(modifier = Modifier.fillMaxSize()) {
         if (quotes.isEmpty()) {
-            Box(
+            LazyColumn(
                 modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
+                state = lazyListState,
+                contentPadding = contentPadding
             ) {
-                Text(emptyMessage, style = MaterialTheme.typography.bodyLarge)
+                item {
+                    Box(
+                        modifier = Modifier
+                            .fillParentMaxHeight(0.7f)
+                            .fillMaxWidth(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(emptyMessage, style = MaterialTheme.typography.bodyLarge)
+                    }
+                }
             }
         } else {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 state = lazyListState,
-                contentPadding = PaddingValues(16.dp),
+                contentPadding = PaddingValues(
+                    start = 16.dp, 
+                    end = 16.dp, 
+                    top = contentPadding.calculateTopPadding(),
+                    bottom = contentPadding.calculateBottomPadding() + 80.dp
+                ),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 items(quotes, key = { it.id }) { quote ->
                     var showMenu by remember { mutableStateOf(false) }
                     
-                    Box {
+                    Column {
                         QuoteItem(
                             quote = quote,
-                            onLongClick = { showMenu = true }
+                            onMoreClick = { showMenu = true }
                         )
                         
                         DropdownMenu(
@@ -98,6 +117,12 @@ fun QuotesScreen(
                                 }
                             )
                         }
+
+                        HorizontalDivider(
+                            modifier = Modifier.padding(vertical = 8.dp),
+                            thickness = 0.5.dp,
+                            color = MaterialTheme.colorScheme.outlineVariant
+                        )
                     }
                 }
             }
@@ -108,52 +133,72 @@ fun QuotesScreen(
 @Composable
 fun QuoteItem(
     quote: Quote,
-    onLongClick: () -> Unit
+    onMoreClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
-    Card(
-        modifier = Modifier
+    Column(
+        modifier = modifier
             .fillMaxWidth()
-            .pointerInput(onLongClick) {
-                detectTapGestures(
-                    onLongPress = { onLongClick() }
-                )
-            },
-        shape = MaterialTheme.shapes.medium,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.42f)
-        )
+            .padding(vertical = 4.dp)
     ) {
-        Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             Text(
-                text = "\"${quote.text}\"",
-                style = MaterialTheme.typography.bodyLarge.copy(
-                    fontFamily = MaterialTheme.typography.displayMedium.fontFamily // Используем Serif
-                ),
-                fontStyle = FontStyle.Italic,
-                modifier = Modifier.fillMaxWidth(),
-                color = MaterialTheme.colorScheme.onSurface,
-                lineHeight = MaterialTheme.typography.bodyLarge.lineHeight
+                text = quote.createdAt.formatDate(),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
             )
-
-            Spacer(modifier = Modifier.height(14.dp))
-
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.End
+            IconButton(
+                onClick = onMoreClick, 
+                modifier = Modifier.size(32.dp)
             ) {
+                Surface(
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                    shape = androidx.compose.foundation.shape.CircleShape,
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.MoreVert,
+                        contentDescription = null,
+                        modifier = Modifier.padding(6.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(4.dp))
+
+        Row(modifier = Modifier.fillMaxWidth()) {
+            Text(
+                text = "“",
+                style = TextStyle(
+                    fontWeight = FontWeight.Normal,
+                    fontSize = 14.sp,
+                    color = Color.Black
+                )
+            )
+            Spacer(modifier = Modifier.width(4.dp))
+            Column {
                 Text(
-                    text = quote.author,
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold,
-                    textAlign = TextAlign.End
+                    text = quote.text,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    lineHeight = 24.sp
                 )
 
-                Text(
-                    text = quote.createdAt.formatDate(),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.End
-                )
+                if (quote.author.isNotBlank()) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        text = "— ${quote.author}",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
         }
     }
@@ -199,7 +244,7 @@ fun QuoteItemPreview() {
                     author = "Автор Цитаты",
                     createdAt = System.currentTimeMillis()
                 ),
-                onLongClick = {}
+                onMoreClick = {}
             )
         }
     }

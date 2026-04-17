@@ -3,8 +3,10 @@ package com.example.notes.ui.viewmodel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.navigation.toRoute
 import com.example.notes.data.local.entities.Quote
 import com.example.notes.data.repository.QuotesRepository
+import com.example.notes.ui.navigation.Screen
 import com.example.notes.util.isSameDay
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.FlowPreview
@@ -19,11 +21,15 @@ class QuotesViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
-    private val quoteId: Long = savedStateHandle.get<Long>("quoteId") ?: -1L
+    private val quoteId: Long = try {
+        savedStateHandle.toRoute<Screen.QuoteDetail>().quoteId
+    } catch (e: Exception) {
+        -1L
+    }
 
     val existingQuote: StateFlow<Quote?> = if (quoteId != -1L) {
-        flow { emit(repository.getQuoteById(quoteId)) }
-            .stateIn(viewModelScope, SharingStarted.Lazily, null)
+        repository.getQuoteByIdFlow(quoteId)
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
     } else {
         MutableStateFlow(null).asStateFlow()
     }

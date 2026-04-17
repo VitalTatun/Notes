@@ -1,21 +1,15 @@
 package com.example.notes.ui.components
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
+import androidx.compose.animation.*
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Notes
+import androidx.compose.material.icons.automirrored.filled.StickyNote2
 import androidx.compose.material.icons.filled.FormatQuote
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.notes.R
 
@@ -33,55 +27,41 @@ fun NotesBottomBar(
         modifier = modifier
     ) {
         NavigationBar(
-            tonalElevation = 3.dp
+            tonalElevation = 3.dp,
+            containerColor = MaterialTheme.colorScheme.surface
         ) {
-            NavigationBarItem(
-                selected = selectedTab == 0,
-                onClick = { onTabSelected(0) },
-                icon = { Icon(Icons.AutoMirrored.Filled.Notes, null) },
-                label = { Text(stringResource(R.string.notes)) }
+            val items = listOf(
+                Triple(0, Icons.AutoMirrored.Filled.StickyNote2, R.string.notes),
+                Triple(1, Icons.Default.FormatQuote, R.string.quotes)
             )
-            NavigationBarItem(
-                selected = selectedTab == 1,
-                onClick = { onTabSelected(1) },
-                icon = { Icon(Icons.Default.FormatQuote, null) },
-                label = { Text(stringResource(R.string.quotes)) }
-            )
-        }
-    }
-}
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun NotesScreenPreview() {
-    var selectedTab by remember { mutableStateOf(0) }
-    var isExpanded by remember { mutableStateOf(true) }
-
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Notes") }
-            )
-        },
-        bottomBar = {
-            NotesBottomBar(
-                selectedTab = selectedTab,
-                onTabSelected = { selectedTab = it },
-                isExpanded = isExpanded
-            )
-        }
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-        ) {
-            Button(
-                onClick = { isExpanded = !isExpanded }
-            ) {
-                Text("Toggle BottomBar")
+            items.forEach { (index, icon, labelRes) ->
+                val isSelected = selectedTab == index
+                NavigationBarItem(
+                    selected = isSelected,
+                    onClick = { onTabSelected(index) },
+                    icon = {
+                        Icon(
+                            imageVector = icon,
+                            contentDescription = null
+                        )
+                    },
+                    label = { 
+                        Text(
+                            stringResource(labelRes),
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
+                        ) 
+                    },
+                    colors = NavigationBarItemDefaults.colors(
+                        selectedIconColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                        unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        selectedTextColor = MaterialTheme.colorScheme.onSurface,
+                        unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        indicatorColor = MaterialTheme.colorScheme.secondaryContainer
+                    )
+                )
             }
-            Text("Current tab: $selectedTab")
         }
     }
 }

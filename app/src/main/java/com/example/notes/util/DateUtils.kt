@@ -5,6 +5,7 @@ import java.util.*
 
 private val dateFormatter = SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.getDefault())
 private val shortDateFormatter = SimpleDateFormat("dd.MM.yyyy", Locale.getDefault())
+private val filterDateFormatter = SimpleDateFormat("d MMMM yyyy", Locale.getDefault())
 
 fun Long.formatDate(): String {
     return dateFormatter.format(Date(this))
@@ -12,6 +13,10 @@ fun Long.formatDate(): String {
 
 fun Long.formatShortDate(): String {
     return shortDateFormatter.format(Date(this))
+}
+
+fun Long.formatFilterDate(): String {
+    return filterDateFormatter.format(Date(this))
 }
 
 fun Long.isSameDay(other: Long): Boolean {

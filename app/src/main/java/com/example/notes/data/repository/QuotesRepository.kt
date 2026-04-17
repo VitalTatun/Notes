@@ -12,6 +12,8 @@ class QuotesRepository @Inject constructor(private val quoteDao: QuoteDao) {
 
     fun searchQuotes(query: String): Flow<List<Quote>> = quoteDao.searchQuotes(query)
 
+    fun getQuoteByIdFlow(id: Long): Flow<Quote?> = quoteDao.getQuoteByIdFlow(id)
+
     suspend fun getQuoteById(id: Long): Quote? = quoteDao.getQuoteById(id)
 
     suspend fun insertQuote(quote: Quote) {

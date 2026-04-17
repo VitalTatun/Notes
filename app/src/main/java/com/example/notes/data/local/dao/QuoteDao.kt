@@ -13,6 +13,9 @@ interface QuoteDao {
     fun searchQuotes(query: String): Flow<List<Quote>>
 
     @Query("SELECT * FROM quotes WHERE id = :id")
+    fun getQuoteByIdFlow(id: Long): Flow<Quote?>
+
+    @Query("SELECT * FROM quotes WHERE id = :id")
     suspend fun getQuoteById(id: Long): Quote?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
