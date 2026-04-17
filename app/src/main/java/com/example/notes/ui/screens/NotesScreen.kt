@@ -19,6 +19,7 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.material.icons.filled.FormatQuote
 import androidx.compose.material.icons.filled.MoreVert
@@ -68,50 +69,13 @@ fun NotesScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 items(notes, key = { it.id }) { note ->
-                    var showMenu by remember { mutableStateOf(false) }
-                    
                     Column {
                         NoteItem(
                             note = note,
-                            onMoreClick = { showMenu = true }
+                            onEditClick = { onEditClick(note) },
+                            onCopyClick = { clipboardManager.setText(AnnotatedString(note.content)) },
+                            onDeleteClick = { onDeleteConfirm(note) }
                         )
-
-                        DropdownMenu(
-                            expanded = showMenu,
-                            onDismissRequest = { showMenu = false }
-                        ) {
-                            DropdownMenuItem(
-                                text = { Text("Редактировать") },
-                                leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) },
-                                onClick = {
-                                    showMenu = false
-                                    onEditClick(note)
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = { Text("Скопировать") },
-                                leadingIcon = { Icon(Icons.Default.ContentCopy, contentDescription = null) },
-                                onClick = {
-                                    showMenu = false
-                                    clipboardManager.setText(AnnotatedString(note.content))
-                                }
-                            )
-                            HorizontalDivider()
-                            DropdownMenuItem(
-                                text = { Text("Удалить", color = MaterialTheme.colorScheme.error) },
-                                leadingIcon = {
-                                    Icon(
-                                        Icons.Default.Delete,
-                                        contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.error
-                                    )
-                                },
-                                onClick = {
-                                    showMenu = false
-                                    onDeleteConfirm(note)
-                                }
-                            )
-                        }
                         
                         HorizontalDivider(
                             modifier = Modifier.padding(vertical = 8.dp),
@@ -125,12 +89,31 @@ fun NotesScreen(
     }
 }
 
+@Preview(showBackground = true)
+@Composable
+fun NotesScreenPreview() {
+    MaterialTheme {
+        NotesScreen(
+            notes = listOf(
+                Note(id = 1, title = "Заметка 1", content = "Текст первой заметки", createdAt = System.currentTimeMillis()),
+                Note(id = 2, title = "Заметка 2", content = "Текст второй заметки", createdAt = System.currentTimeMillis())
+            ),
+            onEditClick = {},
+            onDeleteConfirm = {}
+        )
+    }
+}
+
 @Composable
 fun NoteItem(
     note: Note,
-    onMoreClick: () -> Unit,
+    onEditClick: () -> Unit,
+    onCopyClick: () -> Unit,
+    onDeleteClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    var showMenu by remember { mutableStateOf(false) }
+
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -146,20 +129,59 @@ fun NoteItem(
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
             )
-            IconButton(
-                onClick = onMoreClick, 
-                modifier = Modifier.size(32.dp)
-            ) {
-                Surface(
-                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                    shape = androidx.compose.foundation.shape.CircleShape,
-                    modifier = Modifier.fillMaxSize()
+            Box {
+                IconButton(
+                    onClick = { showMenu = true }, 
+                    modifier = Modifier.size(32.dp)
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.MoreVert,
-                        contentDescription = null,
-                        modifier = Modifier.padding(6.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    Surface(
+                        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                        shape = androidx.compose.foundation.shape.CircleShape,
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.MoreVert,
+                            contentDescription = null,
+                            modifier = Modifier.padding(6.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+
+                DropdownMenu(
+                    expanded = showMenu,
+                    onDismissRequest = { showMenu = false }
+                ) {
+                    DropdownMenuItem(
+                        text = { Text("Редактировать") },
+                        leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) },
+                        onClick = {
+                            showMenu = false
+                            onEditClick()
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Скопировать") },
+                        leadingIcon = { Icon(Icons.Default.ContentCopy, contentDescription = null) },
+                        onClick = {
+                            showMenu = false
+                            onCopyClick()
+                        }
+                    )
+                    HorizontalDivider()
+                    DropdownMenuItem(
+                        text = { Text("Удалить", color = MaterialTheme.colorScheme.error) },
+                        leadingIcon = {
+                            Icon(
+                                Icons.Default.Delete,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.error
+                            )
+                        },
+                        onClick = {
+                            showMenu = false
+                            onDeleteClick()
+                        }
                     )
                 }
             }

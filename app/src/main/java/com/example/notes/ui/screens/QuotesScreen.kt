@@ -73,51 +73,14 @@ fun QuotesScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 items(quotes, key = { it.id }) { quote ->
-                    var showMenu by remember { mutableStateOf(false) }
-                    
                     Column {
                         QuoteItem(
                             quote = quote,
-                            onMoreClick = { showMenu = true }
+                            onEditClick = { onEditClick(quote) },
+                            onCopyClick = { clipboardManager.setText(AnnotatedString(quote.text)) },
+                            onDeleteClick = { onDeleteConfirm(quote) }
                         )
                         
-                        DropdownMenu(
-                            expanded = showMenu,
-                            onDismissRequest = { showMenu = false }
-                        ) {
-                            DropdownMenuItem(
-                                text = { Text("Редактировать") },
-                                leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) },
-                                onClick = {
-                                    showMenu = false
-                                    onEditClick(quote)
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = { Text("Скопировать") },
-                                leadingIcon = { Icon(Icons.Default.ContentCopy, contentDescription = null) },
-                                onClick = {
-                                    showMenu = false
-                                    clipboardManager.setText(AnnotatedString(quote.text))
-                                }
-                            )
-                            HorizontalDivider()
-                            DropdownMenuItem(
-                                text = { Text("Удалить", color = MaterialTheme.colorScheme.error) },
-                                leadingIcon = {
-                                    Icon(
-                                        Icons.Default.Delete,
-                                        contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.error
-                                    )
-                                },
-                                onClick = {
-                                    showMenu = false
-                                    onDeleteConfirm(quote)
-                                }
-                            )
-                        }
-
                         HorizontalDivider(
                             modifier = Modifier.padding(vertical = 8.dp),
                             thickness = 0.5.dp,
@@ -133,9 +96,13 @@ fun QuotesScreen(
 @Composable
 fun QuoteItem(
     quote: Quote,
-    onMoreClick: () -> Unit,
+    onEditClick: () -> Unit,
+    onCopyClick: () -> Unit,
+    onDeleteClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    var showMenu by remember { mutableStateOf(false) }
+
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -151,20 +118,59 @@ fun QuoteItem(
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
             )
-            IconButton(
-                onClick = onMoreClick, 
-                modifier = Modifier.size(32.dp)
-            ) {
-                Surface(
-                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                    shape = androidx.compose.foundation.shape.CircleShape,
-                    modifier = Modifier.fillMaxSize()
+            Box {
+                IconButton(
+                    onClick = { showMenu = true }, 
+                    modifier = Modifier.size(32.dp)
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.MoreVert,
-                        contentDescription = null,
-                        modifier = Modifier.padding(6.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    Surface(
+                        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                        shape = androidx.compose.foundation.shape.CircleShape,
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.MoreVert,
+                            contentDescription = null,
+                            modifier = Modifier.padding(6.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+
+                DropdownMenu(
+                    expanded = showMenu,
+                    onDismissRequest = { showMenu = false }
+                ) {
+                    DropdownMenuItem(
+                        text = { Text("Редактировать") },
+                        leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) },
+                        onClick = {
+                            showMenu = false
+                            onEditClick()
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Скопировать") },
+                        leadingIcon = { Icon(Icons.Default.ContentCopy, contentDescription = null) },
+                        onClick = {
+                            showMenu = false
+                            onCopyClick()
+                        }
+                    )
+                    HorizontalDivider()
+                    DropdownMenuItem(
+                        text = { Text("Удалить", color = MaterialTheme.colorScheme.error) },
+                        leadingIcon = {
+                            Icon(
+                                Icons.Default.Delete,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.error
+                            )
+                        },
+                        onClick = {
+                            showMenu = false
+                            onDeleteClick()
+                        }
                     )
                 }
             }
@@ -244,7 +250,9 @@ fun QuoteItemPreview() {
                     author = "Автор Цитаты",
                     createdAt = System.currentTimeMillis()
                 ),
-                onMoreClick = {}
+                onEditClick = {},
+                onCopyClick = {},
+                onDeleteClick = {}
             )
         }
     }

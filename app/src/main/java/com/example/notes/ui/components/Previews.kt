@@ -17,7 +17,9 @@ fun NoteItemPreview() {
                 content = "Текст заметки с описанием какого-то важного дела или мысли.",
                 createdAt = System.currentTimeMillis()
             ),
-            onMoreClick = {}
+            onEditClick = {},
+            onCopyClick = {},
+            onDeleteClick = {}
         )
     }
 }
