@@ -1,5 +1,6 @@
 package com.example.notes.ui.screens
 
+import android.content.res.Configuration
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -15,8 +16,10 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.notes.data.local.entities.Quote
+import com.example.notes.ui.theme.NotesTheme
 import com.example.notes.util.formatDate
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -79,14 +82,18 @@ fun QuoteDetailScreen(
                             Icon(Icons.Default.Delete, contentDescription = "Удалить")
                         }
                     }
-                    IconButton(
+                    FilledIconButton(
                         onClick = { onSave(text, author) },
-                        enabled = canSave
+                        enabled = canSave,
+                        shape = MaterialTheme.shapes.extraLarge,
+                        modifier = Modifier
+                            .height(40.dp)
+                            .width(72.dp),
                     ) {
                         Icon(
                             imageVector = Icons.Default.Done,
                             contentDescription = "Сохранить",
-                            tint = if (canSave) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
+                            modifier = Modifier.size(24.dp)
                         )
                     }
                 },
@@ -169,5 +176,59 @@ fun QuoteDetailScreen(
                 }
             }
         )
+    }
+}
+
+@Preview(showBackground = true, name = "New Quote")
+@Composable
+fun QuoteDetailNewPreview() {
+    NotesTheme {
+        Surface {
+            QuoteDetailScreen(
+                quote = null,
+                onSave = { _, _ -> },
+                onBack = {}
+            )
+        }
+    }
+}
+
+@Preview(showBackground = true, name = "Edit Quote")
+@Composable
+fun QuoteDetailEditPreview() {
+    NotesTheme {
+        Surface {
+            QuoteDetailScreen(
+                quote = Quote(
+                    id = 1,
+                    text = "Единственный способ делать великие дела — любить то, что вы делаете.",
+                    author = "Стив Джобс",
+                    createdAt = System.currentTimeMillis()
+                ),
+                onSave = { _, _ -> },
+                onDelete = {},
+                onBack = {}
+            )
+        }
+    }
+}
+
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+fun QuoteDetailDarkPreview() {
+    NotesTheme(themeMode = "DARK") {
+        Surface {
+            QuoteDetailScreen(
+                quote = Quote(
+                    id = 1,
+                    text = "Будьте собой; все остальные роли уже заняты.",
+                    author = "Оскар Уайльд",
+                    createdAt = System.currentTimeMillis()
+                ),
+                onSave = { _, _ -> },
+                onDelete = {},
+                onBack = {}
+            )
+        }
     }
 }

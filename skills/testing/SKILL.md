@@ -1,26 +1,14 @@
-# Android Testing & Automation Expert Skill
+# Android Testing Expert Skill
 
-This skill provides guidance for implementing a robust testing strategy, covering Unit, UI, and Screenshot testing.
+Expertise in comprehensive testing strategies for Android.
 
-## 🧠 Core Principles
-- **Test Pyramid:** Focus on high-volume Unit tests, medium-volume Integration tests, and low-volume UI tests.
-- **Flakiness Avoidance:** Use `TestDispatcher` for Coroutines and avoid `Thread.sleep()`.
-- **Hermetic Testing:** Tests should be independent and not rely on external services or shared state.
+## 🧠 Core Concepts
+- **Compose Testing APIs:** Transition from `launchFragmentInContainer` to `createAndroidComposeRule` for modern UI testing.
+- **Screenshot Testing:** Use dedicated libraries to validate UI appearance across different configurations and locales.
+- **Edge Case Testing:** Rigorously test state survival during process death and configuration changes (e.g., rotation).
 
-## 🛠 Development Rules
-1. **Unit Testing:** Use MockK for dependencies. Test business logic in ViewModels and UseCases.
-2. **Compose UI Testing:** Use `composeTestRule`. Find elements by `Semantics` (text, contentDescription, tag), not by layout position.
-3. **Dependency Injection in Tests:** Use Hilt in instrumented tests to swap production modules with test doubles.
-4. **Dispatcher Injection:** Always inject `CoroutineDispatcher` into ViewModels/Repositories to allow swapping with `UnconfinedTestDispatcher`.
-5. **Screenshot Testing:** (Optional) Use libraries like Paparazzi or Showkase for regression testing.
-
-## 🏗 Automation
-- **CI/CD:** Ensure tests run automatically on every PR.
-- **Robot Pattern:** Use the Robot pattern for UI tests to keep them readable and maintainable.
-
-## 🔍 Review Mode
-When reviewing tests:
-- Flag tests that don't assert anything.
-- Check for proper cleanup in `@After`.
-- Verify that UI tests are not too fragile.
-- Ensure Coroutine scopes are properly handled in tests.
+## 🛠 Rules
+1. **Robot Pattern:** Use the Robot pattern to decouple test logic from UI implementation details.
+2. **Hilt in Tests:** Use `HiltAndroidRule` to manage dependencies in instrumentation tests.
+3. **Hermetic Tests:** Ensure tests are isolated and don't depend on external network or state.
+4. **Test Composition:** Test small composables in isolation using `ComposeContentTestRule`.

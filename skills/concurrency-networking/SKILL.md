@@ -1,21 +1,14 @@
-# Android Concurrency & Networking Expert Skill
+# Concurrency & Networking Expert Skill
 
-This skill provides guidance for managing modern Kotlin Coroutines, Flow, and networking with Retrofit and OkHttp.
+Expertise in asynchronous programming and data fetching in Android.
 
-## 🧠 Core Principles
-- **Dispatcher Injection:** Always inject `CoroutineDispatcher` to simplify testing.
-- **StateFlow & SharedFlow:** Use `StateFlow` for UI state and `SharedFlow` for one-time events.
-- **Cancellation:** Ensure coroutines are cancelable and avoid long-running operations in `runBlocking`.
-- **Flow Operators:** Use `combine`, `zip`, and `flatMapLatest` correctly.
+## 🧠 Core Concepts
+- **Kotlin Coroutines:** Master Structured Concurrency, Scopes, and proper use of Dispatchers.
+- **Flow & State Management:** Transform cold streams in the Data layer into hot StateFlows in the ViewModel.
+- **Offline-First:** Implement robust caching and synchronization strategies between local databases (Room) and network APIs.
 
-## 🛠 Development Rules
-1. **Network Calls:** Use `Retrofit` with `suspend` functions. Wrap network results in a `Result` or `Resource` sealed class.
-2. **Scoping:** Use `viewModelScope` for ViewModels and `lifecycleScope` for Fragments/Activities.
-3. **Threading:** Perform CPU-intensive work on `Dispatchers.Default` and I/O on `Dispatchers.IO`.
-4. **Retry Logic:** Use `Flow.retry()` for automatic network retries with exponential backoff.
-
-## 🔍 Review Mode
-- Flag `runBlocking` in production code.
-- Check for proper error handling in `catch` operators.
-- Verify that `StateFlow` is started with `SharingStarted.WhileSubscribed`.
-- Ensure network calls are never performed on `Dispatchers.Main`.
+## 🛠 Rules
+1. **Dispatcher Injection:** Always inject `CoroutineDispatcher` to simplify unit testing.
+2. **Handle Exceptions:** Use `CoroutineExceptionHandler` or `runCatching` to prevent app crashes during network failures.
+3. **Structured Concurrency:** Always launch coroutines in a managed scope (e.g., `viewModelScope`).
+4. **Flow Operators:** Use `collectAsStateWithLifecycle` to consume flows safely in Compose.

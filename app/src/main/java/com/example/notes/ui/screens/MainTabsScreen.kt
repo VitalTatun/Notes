@@ -11,6 +11,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -181,10 +182,7 @@ fun MainTabsContent(
         topBar = {
             TopAppBar(
                 title = {
-                    Text(
-                        text = stringResource(if (isNotesTab) R.string.notes else R.string.quotes),
-                        fontWeight = FontWeight.ExtraBold
-                    )
+                // Empty title to remove default text
                 },
                 actions = {
                     DateFilter(
@@ -200,7 +198,7 @@ fun MainTabsContent(
                     }
                     IconButton(onClick = onSettingsClick) {
                         Icon(
-                            imageVector = Icons.Default.MoreVert,
+                            imageVector = Icons.Default.Settings,
                             contentDescription = null
                         )
                     }

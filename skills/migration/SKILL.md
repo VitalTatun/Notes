@@ -1,19 +1,14 @@
 # Android Migration Expert Skill
 
-This skill provides guidance for modernizing Android applications by migrating from legacy technologies to current standards.
+Expertise in gradual modernization and refactoring of Android applications.
 
-## 🧠 Core Principles
-- **Incremental Migration:** Use `ComposeView` for gradual UI updates and interoperability.
-- **Data Safety:** Ensure data integrity during database migrations (Room).
-- **Concurrency Bridge:** Use `asLiveData()` or `collectAsState()` when bridging Flow and legacy UI.
+## 🧠 Core Concepts
+- **XML to Compose:** Strategies for interoperability using `AbstractComposeView` and gradual screen-by-screen migration.
+- **Incremental Refactoring:** Maintain a shippable product while replacing View-system dependencies with Compose and modern architecture.
+- **Component Upgrades:** Documentation for upgrading critical libraries like Play Billing and AGP 9.
 
-## 🛠 Development Rules
-1. **XML to Compose:** Replace one screen or component at a time. Use `AndroidViewBinding` if necessary.
-2. **RxJava to Coroutines:** Convert `Single`/`Observable` to `suspend` functions and `Flow`. Use `kotlinx-coroutines-rx2` bridge.
-3. **Room Migration:** Implement `Migration` classes with proper tests. Use `autoMigrations` where possible.
-4. **Hilt Migration:** Transition from manual DI or Dagger 2 to Hilt using `@AndroidEntryPoint`.
-
-## 🔍 Review Mode
-- Flag logic duplication between old and new layers.
-- Check for performance regressions in the `ComposeView` interop layer.
-- Verify that legacy listeners are properly removed after migration.
+## 🛠 Rules
+1. **Interoperability:** Use `AndroidView` or `ComposeView` for gradual migration without breaking existing functionality.
+2. **Room Migrations:** Always provide automated and manual test paths for database migrations.
+3. **Third-party Libraries:** Evaluate and replace legacy libraries (e.g., Glide with Coil, Retrofit with Ktor if applicable).
+4. **Binary Compatibility:** Ensure changes don't break existing data structures or serialized objects.

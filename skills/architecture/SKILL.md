@@ -1,27 +1,14 @@
 # Android Architecture Expert Skill
 
-This skill provides guidance for building scalable, maintainable, and testable Android applications using Clean Architecture and MVVM.
+Expertise in Modern Android Architecture (MVVM/MVI) and Clean Architecture.
 
 ## 🧠 Core Principles
-- **Separation of Concerns:** Keep UI, Business Logic, and Data Logic in distinct layers.
-- **Unidirectional Data Flow (UDF):** UI -> Events -> ViewModel -> State -> UI.
-- **Offline-First:** Data is always read from the local database (Source of Truth), and the repository handles sync with the network.
-- **Dependency Inversion:** Depend on abstractions, not implementations. Use Hilt for DI.
+- **Layer Separation:** Maintain a clear distinction between UI, Domain, and Data layers.
+- **State Machines:** Treat ViewModels as deterministic state machines processing events and emitting a single UI state.
+- **Dependency Injection:** Use the API-Impl pattern to minimize inter-module dependencies and improve testability.
 
-## 🛠 Development Rules
-1. **ViewModel Responsibilities:** ViewModels should only manage UI state and handle UI events. Avoid logic that doesn't belong to the UI.
-2. **Repository Pattern:** Centralize data access in Repositories. Repositories coordinate between local DB (Room) and remote API (Retrofit).
-3. **Use Cases / Interactors:** For complex business logic that spans multiple repositories, use UseCase classes.
-4. **State Management:** Use `StateFlow` and `SharedFlow`. Always expose immutable state to the UI.
-5. **Dagger/Hilt:** Use constructor injection everywhere. Avoid manual dependency management.
-
-## 🏗 Data Layer
-- **Room:** Define clear entities and DAOs. Use Flow for reactive updates.
-- **Mappers:** Use dedicated mapper functions to convert between Data Entities, Domain Models, and UI Models.
-
-## 🔍 Review Mode
-When reviewing architecture:
-- Flag logic in Fragments/Activities/Composables.
-- Check for proper error handling in the data layer.
-- Verify that UI doesn't have direct access to DAOs or APIs.
-- Ensure ViewModels don't hold references to Android Framework classes (Context, View, etc.).
+## 🛠 Rules
+1. **UDF (Unidirectional Data Flow):** Events go up, state comes down.
+2. **Offline-First:** Implement robust local caching as the primary source of truth.
+3. **Dispatcher Injection:** Always inject `CoroutineDispatcher` to ensure testability.
+4. **Repository Pattern:** Encapsulate data logic and handle synchronization between network and database.

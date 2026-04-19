@@ -1,5 +1,6 @@
 package com.example.notes.ui.screens
 
+import android.content.res.Configuration
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -15,9 +16,13 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.notes.data.local.entities.Note
+import com.example.notes.ui.theme.NotesTheme
 import com.example.notes.util.formatDate
+import androidx.compose.foundation.layout.size
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -59,7 +64,6 @@ fun NoteDetailScreen(
                     Column {
                         Text(
                             text = if (note == null) "Новая заметка" else "Заметка",
-                            style = MaterialTheme.typography.titleMedium
                         )
                         val dateText = note?.createdAt?.formatDate() ?: System.currentTimeMillis().formatDate()
                         Text(
@@ -80,14 +84,20 @@ fun NoteDetailScreen(
                             Icon(Icons.Default.Delete, contentDescription = "Удалить")
                         }
                     }
-                    IconButton(
+
+                    FilledIconButton(
                         onClick = { onSave(title, content) },
-                        enabled = canSave
+                        enabled = canSave,
+                        shape = MaterialTheme.shapes.extraLarge,
+                        modifier = Modifier
+                            .padding(end = 10.dp)
+                            .height(32.dp)
+                            .width(44.dp),
                     ) {
                         Icon(
                             imageVector = Icons.Default.Done,
                             contentDescription = "Сохранить",
-                            tint = if (canSave) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
+                            modifier = Modifier.size(24.dp)
                         )
                     }
                 },
@@ -171,5 +181,59 @@ fun NoteDetailScreen(
                 }
             }
         )
+    }
+}
+
+@Preview(showBackground = true, name = "New Note")
+@Composable
+fun NoteDetailNewPreview() {
+    NotesTheme {
+        Surface {
+            NoteDetailScreen(
+                note = null,
+                onSave = { _, _ -> },
+                onBack = {}
+            )
+        }
+    }
+}
+
+@Preview(showBackground = true, name = "Edit Note")
+@Composable
+fun NoteDetailEditPreview() {
+    NotesTheme {
+        Surface {
+            NoteDetailScreen(
+                note = Note(
+                    id = 1,
+                    title = "Заголовок заметки",
+                    content = "Это текст существующей заметки для редактирования.",
+                    createdAt = System.currentTimeMillis()
+                ),
+                onSave = { _, _ -> },
+                onDelete = {},
+                onBack = {}
+            )
+        }
+    }
+}
+
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+fun NoteDetailDarkPreview() {
+    NotesTheme(themeMode = "DARK") {
+        Surface {
+            NoteDetailScreen(
+                note = Note(
+                    id = 1,
+                    title = "Заголовок в темной теме",
+                    content = "Проверка отображения экрана в темном режиме.",
+                    createdAt = System.currentTimeMillis()
+                ),
+                onSave = { _, _ -> },
+                onDelete = {},
+                onBack = {}
+            )
+        }
     }
 }

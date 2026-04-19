@@ -1,20 +1,14 @@
-# Android General UI Expert Skill
+# Android UI Expert Skill
 
-This skill provides guidance for building accessible, responsive, and beautiful Android UIs, focusing on Material 3 and navigation.
+Expertise in declarative UI construction and system integration.
 
-## 🧠 Core Principles
-- **Accessibility (a11y):** Ensure all elements have meaningful `contentDescription`. Check for 48dp+ touch targets.
-- **Material 3 Tokens:** Use standard design tokens (colors, typography, shapes) to ensure consistency.
-- **Adaptive UI:** Design for different screen sizes (phones, tablets, foldables).
-- **Navigation Flow:** Use type-safe navigation and manage the backstack efficiently.
+## 🧠 Core Concepts
+- **Edge-to-Edge:** Implement modern system UI layouts using `enableEdgeToEdge()` and proper handling of Insets (WindowInsets).
+- **Navigation:** Transition to Navigation Compose with type-safe routing and deep link support.
+- **Design Systems:** Map Figma design tokens to Material Design 3 semantic components and color schemes.
 
-## 🛠 Development Rules
-1. **Coil:** Use `AsyncImage` for loading network and local images. Handle error and placeholder states.
-2. **Text Semantics:** Use `MaterialTheme.typography` styles. Avoid hardcoding text sizes and colors.
-3. **Touch Targets:** Minimum 48x48 dp for interactive elements, even if the icon is smaller.
-4. **Contrast:** Ensure all text and icons meet WCAG AA contrast standards.
-
-## 🔍 Review Mode
-- Flag missing `contentDescription` on non-decorative images.
-- Check for small touch targets.
-- Verify that standard Material 3 components are used instead of custom implementations where possible.
+## 🛠 Rules
+1. **Window Insets:** Always use `Modifier.windowInsetsPadding` or `Modifier.safeDrawingPadding` to avoid overlap with system bars.
+2. **Material 3 Tokens:** Use `MaterialTheme.colorScheme` and `MaterialTheme.typography` instead of hardcoded values.
+3. **Accessibility:** Provide `contentDescription` for all non-decorative images and ensure touch targets are at least 48dp.
+4. **Adaptive Layouts:** Use `WindowSizeClass` to support different screen sizes (phones, tablets, foldables).
