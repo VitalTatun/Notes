@@ -13,14 +13,14 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.notes.data.local.entities.Quote
 import com.example.notes.ui.theme.NotesTheme
-import com.example.notes.util.formatDate
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.ui.graphics.SolidColor
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -58,18 +58,7 @@ fun QuoteDetailScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    Column {
-                        Text(
-                            text = if (quote == null) "Новая цитата" else "Цитата",
-                            style = MaterialTheme.typography.titleMedium
-                        )
-                        val dateText = quote?.createdAt?.formatDate() ?: System.currentTimeMillis().formatDate()
-                        Text(
-                            text = dateText,
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.outline
-                        )
-                    }
+                    Text(text = if (quote == null) "Новая цитата" else "Цитата")
                 },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
@@ -82,13 +71,15 @@ fun QuoteDetailScreen(
                             Icon(Icons.Default.Delete, contentDescription = "Удалить")
                         }
                     }
+
                     FilledIconButton(
                         onClick = { onSave(text, author) },
                         enabled = canSave,
                         shape = MaterialTheme.shapes.extraLarge,
                         modifier = Modifier
-                            .height(40.dp)
-                            .width(72.dp),
+                            .padding(end = 10.dp)
+                            .height(32.dp)
+                            .width(44.dp),
                     ) {
                         Icon(
                             imageVector = Icons.Default.Done,
@@ -110,48 +101,59 @@ fun QuoteDetailScreen(
                 .imePadding()
                 .verticalScroll(scrollState)
         ) {
-            TextField(
-                value = text,
-                onValueChange = { text = it },
-                placeholder = { 
-                    Text(
-                        "Текст цитаты", 
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
-                    ) 
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .focusRequester(focusRequester),
-                textStyle = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = Color.Transparent,
-                    unfocusedContainerColor = Color.Transparent,
-                    focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent,
-                )
-            )
+            Spacer(modifier = Modifier.height(20.dp))
             
-            TextField(
+            BasicTextField(
                 value = author,
                 onValueChange = { author = it },
-                placeholder = { 
-                    Text(
-                        "Автор",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
-                    ) 
-                },
-                modifier = Modifier.fillMaxWidth(),
-                textStyle = MaterialTheme.typography.bodyLarge,
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = Color.Transparent,
-                    unfocusedContainerColor = Color.Transparent,
-                    focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent,
-                )
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 4.dp)
+                    .focusRequester(focusRequester),
+                textStyle = MaterialTheme.typography.bodyLarge.copy(
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface
+                ),
+                cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+                decorationBox = { innerTextField ->
+                    Box {
+                        if (author.isEmpty()) {
+                            Text(
+                                "Автор",
+                                style = MaterialTheme.typography.bodyLarge,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                            )
+                        }
+                        innerTextField()
+                    }
+                }
             )
+            
+            BasicTextField(
+                value = text,
+                onValueChange = { text = it },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 4.dp),
+                textStyle = MaterialTheme.typography.bodyMedium.copy(
+                    color = MaterialTheme.colorScheme.onSurface
+                ),
+                cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+                decorationBox = { innerTextField ->
+                    Box {
+                        if (text.isEmpty()) {
+                            Text(
+                                "Текст цитаты",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                            )
+                        }
+                        innerTextField()
+                    }
+                }
+            )
+            Spacer(modifier = Modifier.height(20.dp))
         }
     }
 

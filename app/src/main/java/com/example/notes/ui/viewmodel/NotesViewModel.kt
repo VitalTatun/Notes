@@ -64,9 +64,9 @@ class NotesViewModel @Inject constructor(
         _selectedDateMillis.value = dateMillis
     }
 
-    fun addNote(title: String, content: String) {
+    fun addNote(content: String) {
         viewModelScope.launch {
-            repository.insertNote(Note(title = title, content = content))
+            repository.insertNote(Note(content = content))
         }
     }
 

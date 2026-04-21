@@ -1,44 +1,39 @@
 package com.example.notes.ui.screens
 
-import android.content.res.Configuration
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.notes.data.local.entities.Note
 import com.example.notes.ui.theme.NotesTheme
-import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.ui.graphics.SolidColor
 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NoteDetailScreen(
     note: Note? = null,
-    onSave: (String, String) -> Unit,
+    onSave: (String) -> Unit,
     onDelete: (() -> Unit)? = null,
     onBack: () -> Unit
 ) {
-    var title by remember { mutableStateOf(note?.title ?: "") }
     var content by remember { mutableStateOf(note?.content ?: "") }
     
-    val canSave by remember(title, content, note) {
+    val canSave by remember(content, note) {
         derivedStateOf {
-            content.isNotBlank() && (note == null || title != note.title || content != note.content)
+            content.isNotBlank() && (note == null || content != note.content)
         }
     }
     
@@ -61,7 +56,7 @@ fun NoteDetailScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    Text(text = if (note == null) "Новая заметка" else "Заметка")
+                    Text(text = if (note == null) "Новая запись" else "Заметка")
                 },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
@@ -76,7 +71,7 @@ fun NoteDetailScreen(
                     }
 
                     FilledIconButton(
-                        onClick = { onSave(title, content) },
+                        onClick = { onSave(content) },
                         enabled = canSave,
                         shape = MaterialTheme.shapes.extraLarge,
                         modifier = Modifier
@@ -106,39 +101,13 @@ fun NoteDetailScreen(
         ) {
             Spacer(modifier = Modifier.height(20.dp))
             BasicTextField(
-                value = title,
-                onValueChange = { title = it },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 4.dp),
-                textStyle = MaterialTheme.typography.headlineSmall.copy(
-                    fontWeight = FontWeight.Medium,
-                    color = MaterialTheme.colorScheme.onSurface
-                ),
-                cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-                decorationBox = { innerTextField ->
-                    Box {
-                        if (title.isEmpty()) {
-                            Text(
-                                "Заголовок",
-                                style = MaterialTheme.typography.headlineSmall,
-                                fontWeight = FontWeight.Medium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
-                            )
-                        }
-                        innerTextField()
-                    }
-                }
-            )
-            
-            BasicTextField(
                 value = content,
                 onValueChange = { content = it },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 4.dp)
                     .focusRequester(focusRequester),
-                textStyle = MaterialTheme.typography.bodyLarge.copy(
+                textStyle = MaterialTheme.typography.bodyMedium.copy(
                     color = MaterialTheme.colorScheme.onSurface
                 ),
                 cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
@@ -147,8 +116,8 @@ fun NoteDetailScreen(
                         if (content.isEmpty()) {
                             Text(
                                 "Начните писать...",
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
                             )
                         }
                         innerTextField()
@@ -190,7 +159,7 @@ fun NoteDetailNewPreview() {
         Surface {
             NoteDetailScreen(
                 note = null,
-                onSave = { _, _ -> },
+                onSave = {},
                 onBack = {}
             )
         }

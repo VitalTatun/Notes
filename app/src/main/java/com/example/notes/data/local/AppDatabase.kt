@@ -11,7 +11,7 @@ import com.example.notes.data.local.entities.Quote
 
 @Database(
     entities = [Note::class, Quote::class],
-    version = 3,
+    version = 4,
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -20,8 +20,8 @@ abstract class AppDatabase : RoomDatabase() {
 
     companion object {
         val MIGRATION_2_3 = object : Migration(2, 3) {
-            override fun migrate(database: SupportSQLiteDatabase) {
-                database.execSQL(
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
                     """
                     CREATE TABLE IF NOT EXISTS quotes_new (
                         id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
@@ -32,15 +32,39 @@ abstract class AppDatabase : RoomDatabase() {
                     """.trimIndent()
                 )
 
-                database.execSQL(
+                db.execSQL(
                     """
                     INSERT INTO quotes_new (id, text, author, createdAt)
                     SELECT id, text, author, createdAt FROM quotes
                     """.trimIndent()
                 )
 
-                database.execSQL("DROP TABLE quotes")
-                database.execSQL("ALTER TABLE quotes_new RENAME TO quotes")
+                db.execSQL("DROP TABLE quotes")
+                db.execSQL("ALTER TABLE quotes_new RENAME TO quotes")
+            }
+        }
+
+        val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS notes_new (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        content TEXT NOT NULL,
+                        createdAt INTEGER NOT NULL
+                    )
+                    """.trimIndent()
+                )
+
+                db.execSQL(
+                    """
+                    INSERT INTO notes_new (id, content, createdAt)
+                    SELECT id, content, createdAt FROM notes
+                    """.trimIndent()
+                )
+
+                db.execSQL("DROP TABLE notes")
+                db.execSQL("ALTER TABLE notes_new RENAME TO notes")
             }
         }
     }

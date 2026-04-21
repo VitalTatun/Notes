@@ -20,8 +20,8 @@ class NotesRepository @Inject constructor(private val noteDao: NoteDao) {
         noteDao.insertNote(note)
     }
 
-    suspend fun addNote(title: String, content: String, createdAt: Long = System.currentTimeMillis()) {
-        val note = Note(title = title, content = content, createdAt = createdAt)
+    suspend fun addNote(content: String, createdAt: Long = System.currentTimeMillis()) {
+        val note = Note(content = content, createdAt = createdAt)
         noteDao.insertNote(note)
     }
 

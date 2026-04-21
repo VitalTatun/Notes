@@ -55,7 +55,7 @@ fun NotesScreen(
                     top = contentPadding.calculateTopPadding(),
                     bottom = contentPadding.calculateBottomPadding() + 80.dp
                 ),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 items(notes, key = { it.id }) { note ->
                     Column {
@@ -67,7 +67,7 @@ fun NotesScreen(
                         )
                         
                         HorizontalDivider(
-                            modifier = Modifier.padding(vertical = 8.dp),
+                            modifier = Modifier.padding(top = 10.dp),
                             thickness = 0.5.dp,
                             color = MaterialTheme.colorScheme.outlineVariant
                         )
@@ -84,8 +84,8 @@ fun NotesScreenPreview() {
     MaterialTheme {
         NotesScreen(
             notes = listOf(
-                Note(id = 1, title = "Заметка 1", content = "Текст первой заметки", createdAt = System.currentTimeMillis()),
-                Note(id = 2, title = "Заметка 2", content = "Текст второй заметки", createdAt = System.currentTimeMillis())
+                Note(id = 1, content = "Текст первой заметки", createdAt = System.currentTimeMillis()),
+                Note(id = 2, content = "Текст второй заметки", createdAt = System.currentTimeMillis())
             ),
             onEditClick = {},
             onDeleteConfirm = {}

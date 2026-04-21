@@ -282,8 +282,8 @@ fun MainTabsScreenPreview() {
             pagerState = pagerState,
             isNotesTab = pagerState.currentPage == 0,
             notes = listOf(
-                Note(id = 1, title = "Заметка 1", content = "Текст первой заметки", createdAt = System.currentTimeMillis()),
-                Note(id = 2, title = "Заметка 2", content = "Текст второй заметки", createdAt = System.currentTimeMillis())
+                Note(id = 1, content = "Текст первой заметки", createdAt = System.currentTimeMillis()),
+                Note(id = 2, content = "Текст второй заметки", createdAt = System.currentTimeMillis())
             ),
             quotes = listOf(
                 Quote(id = 1, text = "Первая цитата", author = "Автор 1", createdAt = System.currentTimeMillis()),
@@ -312,7 +312,7 @@ fun MainTabsScreenFilteredPreview() {
             pagerState = pagerState,
             isNotesTab = pagerState.currentPage == 0,
             notes = listOf(
-                Note(id = 1, title = "Заметка 1", content = "Текст первой заметки", createdAt = System.currentTimeMillis())
+                Note(id = 1, content = "Текст первой заметки", createdAt = System.currentTimeMillis())
             ),
             quotes = emptyList(),
             currentSelectedDate = System.currentTimeMillis(),

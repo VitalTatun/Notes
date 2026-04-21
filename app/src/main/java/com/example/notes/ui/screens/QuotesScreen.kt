@@ -1,6 +1,7 @@
 package com.example.notes.ui.screens
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
@@ -102,35 +103,43 @@ fun QuoteItem(
     modifier: Modifier = Modifier
 ) {
     var showMenu by remember { mutableStateOf(false) }
+    val interactionSource = remember { MutableInteractionSource() }
 
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = 0.dp)
+            .padding(vertical = 4.dp)
     ) {
+        // Шапка: Автор и Меню
         Row(
             modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-           Spacer(modifier = Modifier.weight(1f))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = quote.author.ifBlank { "Неизвестный автор" },
+                    style = MaterialTheme.typography.bodyLarge.copy(
+                        fontWeight = FontWeight.SemiBold,
+                    ),
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
+
+            Spacer(modifier = Modifier.width(10.dp))
+
             Box {
-                IconButton(
-                    onClick = { showMenu = true }, 
-                    modifier = Modifier.size(36.dp)
-                ) {
-                    Surface(
-                        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                        shape = androidx.compose.foundation.shape.CircleShape,
-                        modifier = Modifier.fillMaxSize()
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.MoreVert,
-                            contentDescription = null,
-                            modifier = Modifier.padding(6.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
-                        )
-                    }
-                }
+                Icon(
+                    imageVector = Icons.Default.MoreVert,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier
+                        .size(24.dp)
+                        .clickable(
+                            interactionSource = interactionSource,
+                            indication = null
+                        ) { showMenu = true }
+                )
 
                 DropdownMenu(
                     expanded = showMenu,
@@ -171,9 +180,13 @@ fun QuoteItem(
             }
         }
 
-        Spacer(modifier = Modifier.height(10.dp))
+        Spacer(modifier = Modifier.height(14.dp))
 
-        Row(modifier = Modifier.fillMaxWidth()) {
+        // Контент: Иконка цитаты и Текст
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.Top
+        ) {
             Text(
                 text = "❞",
                 style = TextStyle(
@@ -183,25 +196,12 @@ fun QuoteItem(
                 )
             )
             Spacer(modifier = Modifier.width(4.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = quote.text,
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    lineHeight = 24.sp
-                )
-
-                if (quote.author.isNotBlank()) {
-                    Spacer(modifier = Modifier.height(30.dp))
-                    Text(
-                        text = quote.author,
-                        style = MaterialTheme.typography.bodyLarge,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                        modifier = Modifier.align(Alignment.End)
-                    )
-                }
-            }
+            Text(
+                text = quote.text,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                lineHeight = 24.sp
+            )
         }
     }
 }

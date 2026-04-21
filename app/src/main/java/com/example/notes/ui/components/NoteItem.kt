@@ -1,12 +1,13 @@
 package com.example.notes.ui.components
 
 import android.content.res.Configuration
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.FormatQuote
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -14,6 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -30,13 +32,14 @@ fun NoteItem(
     modifier: Modifier = Modifier
 ) {
     var showMenu by remember { mutableStateOf(false) }
+    val interactionSource = remember { MutableInteractionSource() }
 
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp)
+            .padding(vertical = 0.dp)
     ) {
-        // Шапка: Дата, Заголовок и Меню
+        // Шапка: Дата и Меню
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -45,40 +48,25 @@ fun NoteItem(
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = note.createdAt.formatDate(),
-                    style = MaterialTheme.typography.labelMedium.copy(
+                    style = MaterialTheme.typography.labelLarge.copy(
                         fontWeight = FontWeight.SemiBold,
                     ),
                     color = MaterialTheme.colorScheme.primary
                 )
-                if (note.title.isNotBlank()) {
-                    Text(
-                        text = note.title,
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.SemiBold
-                        ),
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                }
             }
 
             Box {
-                IconButton(
-                    onClick = { showMenu = true },
-                    modifier = Modifier.size(36.dp)
-                ) {
-                    Surface(
-                        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
-                        shape = androidx.compose.foundation.shape.CircleShape,
-                        modifier = Modifier.fillMaxSize()
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.MoreVert,
-                            contentDescription = null,
-                            modifier = Modifier.padding(6.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
-                        )
-                    }
-                }
+                Icon(
+                    imageVector = Icons.Default.MoreVert,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier
+                        .size(24.dp)
+                        .clickable(
+                            interactionSource = interactionSource,
+                            indication = null
+                        ) { showMenu = true }
+                )
 
                 DropdownMenu(
                     expanded = showMenu,
@@ -119,7 +107,7 @@ fun NoteItem(
             }
         }
 
-        Spacer(modifier = Modifier.height(14.dp))
+        Spacer(modifier = Modifier.height(10.dp))
 
         // Контент: Иконка цитаты и Текст
         if (note.content.isNotBlank()) {
@@ -128,18 +116,10 @@ fun NoteItem(
                 verticalAlignment = Alignment.Top
             ) {
                 Text(
-                    text = "❞",
-                    style = TextStyle(
-                        fontWeight = FontWeight.Normal,
-                        fontSize = 14.sp,
-                        color = MaterialTheme.colorScheme.onSurface,
-                    )
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(
                     text = note.content,
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurface
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
         }
@@ -153,14 +133,13 @@ fun NoteItemLocalPreview() {
         Surface {
             NoteItem(
                 note = Note(
-                    title = "Заголовок заметки",
                     content = "Это текст тестовой заметки для предварительного просмотра компонента.",
                     createdAt = System.currentTimeMillis()
                 ),
                 onEditClick = {},
                 onCopyClick = {},
                 onDeleteClick = {},
-                modifier = Modifier.padding(16.dp)
+                modifier = Modifier.padding(horizontal = 16.dp)
             )
         }
     }
@@ -173,14 +152,13 @@ fun NoteItemDarkPreview() {
         Surface {
             NoteItem(
                 note = Note(
-                    title = "Заголовок заметки",
                     content = "Это текст тестовой заметки для предварительного просмотра в темной теме.",
                     createdAt = System.currentTimeMillis()
                 ),
                 onEditClick = {},
                 onCopyClick = {},
                 onDeleteClick = {},
-                modifier = Modifier.padding(16.dp)
+                modifier = Modifier.padding(10.dp)
             )
         }
     }

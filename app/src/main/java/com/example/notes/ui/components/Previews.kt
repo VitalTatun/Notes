@@ -12,7 +12,6 @@ fun NoteItemPreview() {
         NoteItem(
             note = Note(
                 id = 1,
-                title = "Заголовок заметки",
                 content = "Текст заметки с описанием какого-то важного дела или мысли.",
                 createdAt = System.currentTimeMillis()
             ),

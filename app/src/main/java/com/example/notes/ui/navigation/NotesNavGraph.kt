@@ -156,8 +156,8 @@ fun NotesNavGraph(
             if (isNewNote) {
                 NoteDetailScreen(
                     note = null,
-                    onSave = { title, content ->
-                        notesViewModel.addNote(title, content)
+                    onSave = { content ->
+                        notesViewModel.addNote(content)
                         navController.popBackStack()
                     },
                     onDelete = null,
@@ -171,8 +171,8 @@ fun NotesNavGraph(
             } else {
                 NoteDetailScreen(
                     note = existingNote,
-                    onSave = { title, content ->
-                        notesViewModel.updateNote(existingNote!!.copy(title = title, content = content))
+                    onSave = { content ->
+                        notesViewModel.updateNote(existingNote!!.copy(content = content))
                         navController.popBackStack()
                     },
                     onDelete = {

@@ -82,7 +82,6 @@ class SettingsViewModel @Inject constructor(
                 val notesArray = JSONArray()
                 notes.forEach { note ->
                     notesArray.put(JSONObject().apply {
-                        put("title", note.title)
                         put("content", note.content)
                         put("createdAt", note.createdAt)
                     })
@@ -149,8 +148,7 @@ class SettingsViewModel @Inject constructor(
                     for (i in 0 until it.length()) {
                         val obj = it.getJSONObject(i)
                         notesRepository.addNote(
-                            title = obj.getString("title"),
-                            content = obj.getString("content"),
+                            content = obj.optString("content", obj.optString("title")),
                             createdAt = obj.optLong("createdAt", System.currentTimeMillis())
                         )
                     }
@@ -185,7 +183,6 @@ class SettingsViewModel @Inject constructor(
                     val daysAgo = (i - 1) % 7
                     val createdAt = now - (daysAgo * dayMillis) - (i * 60_000L)
                     notesRepository.addNote(
-                        title = "Заметка #$i",
                         content = "Это содержание тестовой заметки номер $i. Здесь может быть довольно длинный текст для проверки прокрутки и производительности списка в Material 3.",
                         createdAt = createdAt
                     )
