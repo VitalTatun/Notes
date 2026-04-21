@@ -12,6 +12,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -45,9 +46,9 @@ fun NoteItem(
                 Text(
                     text = note.createdAt.formatDate(),
                     style = MaterialTheme.typography.labelMedium.copy(
-                        fontWeight = FontWeight.Medium,
+                        fontWeight = FontWeight.SemiBold,
                     ),
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = MaterialTheme.colorScheme.primary
                 )
                 if (note.title.isNotBlank()) {
                     Text(
@@ -73,7 +74,7 @@ fun NoteItem(
                         Icon(
                             imageVector = Icons.Default.MoreVert,
                             contentDescription = null,
-                            modifier = Modifier.padding(8.dp),
+                            modifier = Modifier.padding(6.dp),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
                         )
                     }
@@ -126,14 +127,15 @@ fun NoteItem(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.Top
             ) {
-                Icon(
-                    imageVector = Icons.Default.FormatQuote,
-                    contentDescription = null,
-                    modifier = Modifier
-                        .size(14.dp),
-                    tint = MaterialTheme.colorScheme.onSurface
+                Text(
+                    text = "❞",
+                    style = TextStyle(
+                        fontWeight = FontWeight.Normal,
+                        fontSize = 14.sp,
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
                 )
-                Spacer(modifier = Modifier.width(0.dp))
+                Spacer(modifier = Modifier.width(4.dp))
                 Text(
                     text = note.content,
                     style = MaterialTheme.typography.bodyLarge,

@@ -45,7 +45,8 @@ fun DateFilter(
                     style = MaterialTheme.typography.bodyMedium.copy(
                         fontWeight = FontWeight.Medium,
                         fontSize = 14.sp,
-                        color = Color.Gray.copy(alpha = 0.8f)
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f)
+                                // color = Color.Gray.copy(alpha = 0.8f)
                     )
                 )
                 Text(

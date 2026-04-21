@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Notes</string>
+    <string name="app_name">Today</string>
     <string name="notes">Today</string>
     <string name="quotes">Цитаты</string>
     <string name="date">Дата</string>

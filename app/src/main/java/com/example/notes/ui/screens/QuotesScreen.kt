@@ -70,7 +70,7 @@ fun QuotesScreen(
                     top = contentPadding.calculateTopPadding(),
                     bottom = contentPadding.calculateBottomPadding() + 80.dp
                 ),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                verticalArrangement = Arrangement.spacedBy(0.dp)
             ) {
                 items(quotes, key = { it.id }) { quote ->
                     Column {
@@ -82,7 +82,7 @@ fun QuotesScreen(
                         )
                         
                         HorizontalDivider(
-                            modifier = Modifier.padding(vertical = 8.dp),
+                            modifier = Modifier.padding(vertical = 10.dp),
                             thickness = 0.5.dp,
                             color = MaterialTheme.colorScheme.outlineVariant
                         )
@@ -106,22 +106,17 @@ fun QuoteItem(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp)
+            .padding(vertical = 0.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = quote.createdAt.formatDate(),
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
-            )
+           Spacer(modifier = Modifier.weight(1f))
             Box {
                 IconButton(
                     onClick = { showMenu = true }, 
-                    modifier = Modifier.size(32.dp)
+                    modifier = Modifier.size(36.dp)
                 ) {
                     Surface(
                         color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
@@ -132,7 +127,7 @@ fun QuoteItem(
                             imageVector = Icons.Default.MoreVert,
                             contentDescription = null,
                             modifier = Modifier.padding(6.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
                         )
                     }
                 }
@@ -176,19 +171,19 @@ fun QuoteItem(
             }
         }
 
-        Spacer(modifier = Modifier.height(4.dp))
+        Spacer(modifier = Modifier.height(10.dp))
 
         Row(modifier = Modifier.fillMaxWidth()) {
             Text(
-                text = "“",
+                text = "❞",
                 style = TextStyle(
                     fontWeight = FontWeight.Normal,
                     fontSize = 14.sp,
-                    color = Color.Black
+                    color = MaterialTheme.colorScheme.onSurface,
                 )
             )
             Spacer(modifier = Modifier.width(4.dp))
-            Column {
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = quote.text,
                     style = MaterialTheme.typography.bodyLarge,
@@ -197,12 +192,13 @@ fun QuoteItem(
                 )
 
                 if (quote.author.isNotBlank()) {
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(30.dp))
                     Text(
-                        text = "— ${quote.author}",
-                        style = MaterialTheme.typography.titleSmall,
+                        text = quote.author,
+                        style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                        modifier = Modifier.align(Alignment.End)
                     )
                 }
             }

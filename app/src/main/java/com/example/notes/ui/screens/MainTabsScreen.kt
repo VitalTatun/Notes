@@ -26,6 +26,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.notes.R
 import com.example.notes.data.local.entities.Note
@@ -182,7 +183,12 @@ fun MainTabsContent(
         topBar = {
             TopAppBar(
                 title = {
-                // Empty title to remove default text
+                    Text(
+                        text = "Today",
+                        style = MaterialTheme.typography.headlineSmall,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontSize = 30.sp
+                    )
                 },
                 actions = {
                     DateFilter(
@@ -204,10 +210,7 @@ fun MainTabsContent(
                     }
                 },
                 scrollBehavior = scrollBehavior,
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surface
-                )
+
             )
         },
         bottomBar = {

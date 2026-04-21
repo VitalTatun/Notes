@@ -10,6 +10,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -20,8 +21,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.notes.data.local.entities.Note
 import com.example.notes.ui.theme.NotesTheme
-import com.example.notes.util.formatDate
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.ui.graphics.SolidColor
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -35,7 +36,6 @@ fun NoteDetailScreen(
     var title by remember { mutableStateOf(note?.title ?: "") }
     var content by remember { mutableStateOf(note?.content ?: "") }
     
-    // Оптимизация: вычисляем состояние кнопки сохранения только при изменении полей
     val canSave by remember(title, content, note) {
         derivedStateOf {
             content.isNotBlank() && (note == null || title != note.title || content != note.content)
@@ -61,17 +61,7 @@ fun NoteDetailScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    Column {
-                        Text(
-                            text = if (note == null) "Новая заметка" else "Заметка",
-                        )
-                        val dateText = note?.createdAt?.formatDate() ?: System.currentTimeMillis().formatDate()
-                        Text(
-                            text = dateText,
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.outline
-                        )
-                    }
+                    Text(text = if (note == null) "Новая заметка" else "Заметка")
                 },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
@@ -111,52 +101,61 @@ fun NoteDetailScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
                 .consumeWindowInsets(innerPadding)
-                .imePadding() // Автоматический отступ для клавиатуры
+                .imePadding()
                 .verticalScroll(scrollState)
         ) {
-            TextField(
+            Spacer(modifier = Modifier.height(20.dp))
+            BasicTextField(
                 value = title,
                 onValueChange = { title = it },
-                placeholder = { 
-                    Text(
-                        "Заголовок", 
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
-                    ) 
-                },
-                modifier = Modifier.fillMaxWidth(),
-                textStyle = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = Color.Transparent,
-                    unfocusedContainerColor = Color.Transparent,
-                    focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent,
-                )
-            )
-            
-            TextField(
-                value = content,
-                onValueChange = { content = it },
-                placeholder = { 
-                    Text(
-                        "Начните писать...",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
-                    ) 
-                },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f)
-                    .focusRequester(focusRequester),
-                textStyle = MaterialTheme.typography.bodyLarge,
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = Color.Transparent,
-                    unfocusedContainerColor = Color.Transparent,
-                    focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent,
-                )
+                    .padding(horizontal = 16.dp, vertical = 4.dp),
+                textStyle = MaterialTheme.typography.headlineSmall.copy(
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurface
+                ),
+                cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+                decorationBox = { innerTextField ->
+                    Box {
+                        if (title.isEmpty()) {
+                            Text(
+                                "Заголовок",
+                                style = MaterialTheme.typography.headlineSmall,
+                                fontWeight = FontWeight.Medium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                            )
+                        }
+                        innerTextField()
+                    }
+                }
             )
+            
+            BasicTextField(
+                value = content,
+                onValueChange = { content = it },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 4.dp)
+                    .focusRequester(focusRequester),
+                textStyle = MaterialTheme.typography.bodyLarge.copy(
+                    color = MaterialTheme.colorScheme.onSurface
+                ),
+                cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+                decorationBox = { innerTextField ->
+                    Box {
+                        if (content.isEmpty()) {
+                            Text(
+                                "Начните писать...",
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                            )
+                        }
+                        innerTextField()
+                    }
+                }
+            )
+            Spacer(modifier = Modifier.height(20.dp))
         }
     }
 
@@ -192,46 +191,6 @@ fun NoteDetailNewPreview() {
             NoteDetailScreen(
                 note = null,
                 onSave = { _, _ -> },
-                onBack = {}
-            )
-        }
-    }
-}
-
-@Preview(showBackground = true, name = "Edit Note")
-@Composable
-fun NoteDetailEditPreview() {
-    NotesTheme {
-        Surface {
-            NoteDetailScreen(
-                note = Note(
-                    id = 1,
-                    title = "Заголовок заметки",
-                    content = "Это текст существующей заметки для редактирования.",
-                    createdAt = System.currentTimeMillis()
-                ),
-                onSave = { _, _ -> },
-                onDelete = {},
-                onBack = {}
-            )
-        }
-    }
-}
-
-@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
-@Composable
-fun NoteDetailDarkPreview() {
-    NotesTheme(themeMode = "DARK") {
-        Surface {
-            NoteDetailScreen(
-                note = Note(
-                    id = 1,
-                    title = "Заголовок в темной теме",
-                    content = "Проверка отображения экрана в темном режиме.",
-                    createdAt = System.currentTimeMillis()
-                ),
-                onSave = { _, _ -> },
-                onDelete = {},
                 onBack = {}
             )
         }
