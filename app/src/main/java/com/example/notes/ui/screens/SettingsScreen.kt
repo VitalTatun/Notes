@@ -114,18 +114,38 @@ fun SettingsScreen(
                 onClick = { showImportModeDialog = true }
             )
 
-            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-
-            SettingsSectionTitle("Опасная зона")
-
             SettingsClickableItem(
                 title = "Удалить все данные",
                 onClick = { showDeleteConfirmDialog = true }
             )
 
-            SettingsClickableItem(
-                title = "Добавить тестовые данные (50+50)",
-                onClick = { viewModel.addSampleData() }
+            val packageInfo = remember {
+                try {
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+                        context.packageManager.getPackageInfo(
+                            context.packageName,
+                            android.content.pm.PackageManager.PackageInfoFlags.of(0)
+                        )
+                    } else {
+                        @Suppress("DEPRECATION")
+                        context.packageManager.getPackageInfo(context.packageName, 0)
+                    }
+                } catch (e: Exception) {
+                    null
+                }
+            }
+            val versionText = packageInfo?.versionName ?: "1.0.0"
+
+            Spacer(modifier = Modifier.weight(1f))
+            
+            Text(
+                text = "Версия $versionText",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 24.dp),
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center
             )
         }
     }

@@ -61,7 +61,7 @@ fun DateFilter(
         }
             FilledIconButton(
                 onClick = onClick,
-                modifier = Modifier.size(40.dp),
+                modifier = Modifier.size(48.dp),
                 shape = CircleShape,
                 colors = IconButtonDefaults.filledIconButtonColors(
                     containerColor = if (isSelected) MaterialTheme.colorScheme.primary 
