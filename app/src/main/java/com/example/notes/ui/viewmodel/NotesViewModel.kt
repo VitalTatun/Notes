@@ -21,7 +21,11 @@ class NotesViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
-    val noteId: Long = savedStateHandle.toRoute<Screen.NoteDetail>().noteId
+    val noteId: Long = try {
+        savedStateHandle.toRoute<Screen.NoteDetail>().noteId
+    } catch (e: Exception) {
+        -1L
+    }
     
     val existingNote: StateFlow<Note?> = if (noteId != -1L) {
         repository.getNoteByIdFlow(noteId)

@@ -1,67 +1,92 @@
 package com.example.notes
 
 import android.os.Bundle
-import androidx.fragment.app.FragmentActivity
+import android.view.WindowManager
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.layout.Box
+import androidx.activity.viewModels
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.compose.ui.platform.LocalView
+import androidx.fragment.app.FragmentActivity
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.rememberNavController
-import com.example.notes.ui.navigation.NotesNavGraph
-import com.example.notes.ui.theme.NotesTheme
-import com.example.notes.ui.viewmodel.*
 import com.example.notes.ui.components.EditorLoadingScreen
+import com.example.notes.ui.navigation.NotesNavGraph
+import com.example.notes.ui.screens.LockScreen
+import com.example.notes.ui.theme.NotesTheme
+import com.example.notes.ui.viewmodel.MainViewModel
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class MainActivity : FragmentActivity() {
+    private val mainViewModel: MainViewModel by viewModels()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        
+
         enableEdgeToEdge()
         setContent {
-            val mainViewModel: MainViewModel = hiltViewModel()
-            val themeMode by mainViewModel.themeMode.collectAsState(initial = "SYSTEM")
-            val fontScale by mainViewModel.fontScale.collectAsState(initial = 1.0f)
-            val useSystemFontSize by mainViewModel.useSystemFontSize.collectAsState(initial = true)
-            
+            val uiState by mainViewModel.uiState.collectAsStateWithLifecycle()
+
             NotesTheme(
-                themeMode = themeMode,
-                fontScale = fontScale,
-                useSystemFontSize = useSystemFontSize,
+                themeMode = uiState.themeMode,
+                fontScale = uiState.fontScale,
+                useSystemFontSize = uiState.useSystemFontSize,
                 dynamicColor = true
             ) {
-                val navController = rememberNavController()
+                SecureWindowEffect(isLocked = uiState.isLocked)
 
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    NotesNavGraph(navController = navController)
+                    when {
+                        !uiState.isReady -> EditorLoadingScreen(
+                            title = "Загрузка",
+                            onBack = {}
+                        )
+
+                        uiState.isLocked -> LockScreen(
+                            onUnlock = mainViewModel::unlockWithPasscode,
+                            onBiometricSuccess = mainViewModel::unlockWithBiometricSuccess,
+                            biometricEnabled = uiState.biometricUnlockEnabled
+                        )
+
+                        else -> {
+                            val navController = rememberNavController()
+                            NotesNavGraph(navController = navController)
+                        }
+                    }
                 }
             }
         }
     }
+
+    override fun onStop() {
+        super.onStop()
+        if (!isChangingConfigurations) {
+            mainViewModel.onAppBackgrounded()
+        }
+    }
 }
 
-@Preview(showBackground = true)
 @Composable
-fun EditorLoadingScreenPreview() {
-    NotesTheme {
-        EditorLoadingScreen(
-            title = "Загрузка",
-            onBack = {}
-        )
+private fun SecureWindowEffect(isLocked: Boolean) {
+    val view = LocalView.current
+    DisposableEffect(view, isLocked) {
+        val window = (view.context as? FragmentActivity)?.window
+        if (isLocked) {
+            window?.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
+        } else {
+            window?.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
+        }
+
+        onDispose { }
     }
 }

@@ -6,10 +6,19 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.notes.data.repository.NotesRepository
 import com.example.notes.data.repository.QuotesRepository
+import com.example.notes.data.repository.UserPreferences
 import com.example.notes.data.repository.UserPreferencesRepository
+import com.example.notes.security.AppLockManager
+import com.example.notes.security.PasscodeSecurityManager
 import com.example.notes.util.ShareUtils
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.json.JSONArray
 import org.json.JSONObject
@@ -22,6 +31,9 @@ data class SettingsUiState(
     val themeMode: String = "SYSTEM",
     val fontScale: Float = 1.0f,
     val useSystemFontSize: Boolean = true,
+    val appLockEnabled: Boolean = false,
+    val biometricUnlockEnabled: Boolean = false,
+    val hasPasscode: Boolean = false,
     val error: String? = null,
     val message: String? = null,
     val isLoading: Boolean = true
@@ -31,21 +43,42 @@ data class SettingsUiState(
 class SettingsViewModel @Inject constructor(
     private val prefsRepository: UserPreferencesRepository,
     private val notesRepository: NotesRepository,
-    private val quotesRepository: QuotesRepository
+    private val quotesRepository: QuotesRepository,
+    private val passcodeSecurityManager: PasscodeSecurityManager,
+    private val appLockManager: AppLockManager
 ) : ViewModel() {
+
+    private val preferencesState = prefsRepository.userPreferencesFlow.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5_000),
+        initialValue = UserPreferences(
+            themeMode = "SYSTEM",
+            fontScale = 1.0f,
+            useSystemFontSize = true,
+            appLockEnabled = false,
+            biometricUnlockEnabled = false,
+            passcodeHash = null,
+            passcodeSalt = null
+        )
+    )
 
     private val _uiState = MutableStateFlow(SettingsUiState(isLoading = true))
     val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
 
     init {
         viewModelScope.launch {
-            prefsRepository.userPreferencesFlow.collect { prefs ->
-                _uiState.update { it.copy(
-                    themeMode = prefs.themeMode,
-                    fontScale = prefs.fontScale,
-                    useSystemFontSize = prefs.useSystemFontSize,
-                    isLoading = false
-                ) }
+            preferencesState.collect { prefs ->
+                _uiState.update {
+                    it.copy(
+                        themeMode = prefs.themeMode,
+                        fontScale = prefs.fontScale,
+                        useSystemFontSize = prefs.useSystemFontSize,
+                        appLockEnabled = prefs.appLockEnabled,
+                        biometricUnlockEnabled = prefs.biometricUnlockEnabled,
+                        hasPasscode = !prefs.passcodeHash.isNullOrBlank() && !prefs.passcodeSalt.isNullOrBlank(),
+                        isLoading = false
+                    )
+                }
             }
         }
     }
@@ -68,6 +101,73 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    fun setupAppLock(passcode: String, enableBiometric: Boolean, onResult: (Boolean) -> Unit = {}) {
+        viewModelScope.launch {
+            val normalized = passcode.trim()
+            if (normalized.length < MIN_PASSCODE_LENGTH) {
+                _uiState.update { it.copy(error = "Пароль должен быть не короче 4 символов") }
+                onResult(false)
+                return@launch
+            }
+
+            val (hash, salt) = passcodeSecurityManager.createHash(normalized)
+            prefsRepository.savePasscode(hash, salt)
+            prefsRepository.setAppLockEnabled(true)
+            prefsRepository.setBiometricUnlockEnabled(enableBiometric)
+            appLockManager.unlock()
+            _uiState.update { it.copy(message = "Защита приложения включена") }
+            onResult(true)
+        }
+    }
+
+    fun changePasscode(currentPasscode: String, newPasscode: String, onResult: (Boolean) -> Unit = {}) {
+        viewModelScope.launch {
+            if (!verifyCurrentPasscode(currentPasscode)) {
+                _uiState.update { it.copy(error = "Текущий пароль введён неверно") }
+                onResult(false)
+                return@launch
+            }
+
+            val normalizedNew = newPasscode.trim()
+            if (normalizedNew.length < MIN_PASSCODE_LENGTH) {
+                _uiState.update { it.copy(error = "Новый пароль должен быть не короче 4 символов") }
+                onResult(false)
+                return@launch
+            }
+
+            val (hash, salt) = passcodeSecurityManager.createHash(normalizedNew)
+            prefsRepository.savePasscode(hash, salt)
+            _uiState.update { it.copy(message = "Пароль приложения изменён") }
+            onResult(true)
+        }
+    }
+
+    fun disableAppLock(currentPasscode: String, onResult: (Boolean) -> Unit = {}) {
+        viewModelScope.launch {
+            if (!verifyCurrentPasscode(currentPasscode)) {
+                _uiState.update { it.copy(error = "Текущий пароль введён неверно") }
+                onResult(false)
+                return@launch
+            }
+
+            prefsRepository.clearPasscode()
+            appLockManager.unlock()
+            _uiState.update { it.copy(message = "Защита приложения отключена") }
+            onResult(true)
+        }
+    }
+
+    fun setBiometricUnlockEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            if (!_uiState.value.hasPasscode) {
+                _uiState.update { it.copy(error = "Сначала задайте пароль приложения") }
+                return@launch
+            }
+
+            prefsRepository.setBiometricUnlockEnabled(enabled)
+        }
+    }
+
     fun clearMessage() {
         _uiState.update { it.copy(message = null, error = null) }
     }
@@ -77,7 +177,7 @@ class SettingsViewModel @Inject constructor(
             try {
                 val notes = notesRepository.allNotes.first()
                 val quotes = quotesRepository.allQuotes.first()
-                
+
                 val root = JSONObject()
                 val notesArray = JSONArray()
                 notes.forEach { note ->
@@ -86,7 +186,7 @@ class SettingsViewModel @Inject constructor(
                         put("createdAt", note.createdAt)
                     })
                 }
-                
+
                 val quotesArray = JSONArray()
                 quotes.forEach { quote ->
                     quotesArray.put(JSONObject().apply {
@@ -95,13 +195,13 @@ class SettingsViewModel @Inject constructor(
                         put("createdAt", quote.createdAt)
                     })
                 }
-                
+
                 root.put("notes", notesArray)
                 root.put("quotes", quotesArray)
-                
+
                 val jsonString = root.toString(4)
                 val fileName = "notes_export_${System.currentTimeMillis()}.json"
-                
+
                 ShareUtils.shareJsonFile(context, jsonString, fileName)
                 _uiState.update { it.copy(message = "Данные подготовлены к экспорту") }
             } catch (e: Exception) {
@@ -135,14 +235,14 @@ class SettingsViewModel @Inject constructor(
                         }
                     }
                 }
-                
+
                 val root = JSONObject(stringBuilder.toString())
-                
+
                 if (replace) {
                     notesRepository.deleteAllNotes()
                     quotesRepository.deleteAllQuotes()
                 }
-                
+
                 val notesArray = root.optJSONArray("notes")
                 notesArray?.let {
                     for (i in 0 until it.length()) {
@@ -153,7 +253,7 @@ class SettingsViewModel @Inject constructor(
                         )
                     }
                 }
-                
+
                 val quotesArray = root.optJSONArray("quotes")
                 quotesArray?.let {
                     for (i in 0 until it.length()) {
@@ -165,7 +265,7 @@ class SettingsViewModel @Inject constructor(
                         )
                     }
                 }
-                
+
                 _uiState.update { it.copy(message = "Импорт завершен успешно") }
             } catch (e: Exception) {
                 _uiState.update { it.copy(error = "Ошибка импорта: ${e.message}") }
@@ -187,7 +287,7 @@ class SettingsViewModel @Inject constructor(
                         createdAt = createdAt
                     )
                 }
-                
+
                 val authors = listOf("Марк Твен", "Альберт Эйнштейн", "Стив Джобс", "Оскар Уайльд", "Лев Толстой")
                 val quotes = listOf(
                     "Единственный способ делать великие дела — любить то, что вы делаете.",
@@ -211,5 +311,16 @@ class SettingsViewModel @Inject constructor(
                 _uiState.update { it.copy(error = "Ошибка при добавлении: ${e.message}") }
             }
         }
+    }
+
+    private fun verifyCurrentPasscode(rawPasscode: String): Boolean {
+        val preferences = preferencesState.value
+        val storedHash = preferences.passcodeHash ?: return false
+        val storedSalt = preferences.passcodeSalt ?: return false
+        return passcodeSecurityManager.verify(rawPasscode.trim(), storedHash, storedSalt)
+    }
+
+    private companion object {
+        const val MIN_PASSCODE_LENGTH = 4
     }
 }
