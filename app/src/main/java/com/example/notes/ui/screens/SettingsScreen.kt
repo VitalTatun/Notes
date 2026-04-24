@@ -48,6 +48,7 @@ import androidx.compose.foundation.layout.width
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.notes.security.BiometricAuthManager
+import com.example.notes.ui.components.EditorLoadingScreen
 import com.example.notes.ui.viewmodel.SettingsViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -84,6 +85,14 @@ fun SettingsScreen(
             snackbarHostState.showSnackbar(it)
             viewModel.clearMessage()
         }
+    }
+
+    if (uiState.isLoading) {
+        EditorLoadingScreen(
+            title = "Настройки",
+            onBack = onBack
+        )
+        return
     }
 
     Scaffold(

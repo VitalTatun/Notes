@@ -11,18 +11,18 @@ class AppLockManager @Inject constructor() {
     private val _isLocked = MutableStateFlow(false)
     val isLocked: StateFlow<Boolean> = _isLocked.asStateFlow()
 
-    private var hasInitialized = false
+    private var hasProtectedSession = false
 
     fun syncWithSettings(appLockEnabled: Boolean, hasPasscode: Boolean) {
         if (!appLockEnabled || !hasPasscode) {
             _isLocked.value = false
-            hasInitialized = true
+            hasProtectedSession = false
             return
         }
 
-        if (!hasInitialized) {
+        if (!hasProtectedSession) {
             _isLocked.value = true
-            hasInitialized = true
+            hasProtectedSession = true
         }
     }
 
@@ -33,12 +33,12 @@ class AppLockManager @Inject constructor() {
     }
 
     fun unlock() {
-        hasInitialized = true
+        hasProtectedSession = true
         _isLocked.value = false
     }
 
     fun lockNow() {
-        hasInitialized = true
+        hasProtectedSession = true
         _isLocked.value = true
     }
 }

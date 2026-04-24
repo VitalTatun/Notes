@@ -6,7 +6,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.notes.data.repository.NotesRepository
 import com.example.notes.data.repository.QuotesRepository
-import com.example.notes.data.repository.UserPreferences
 import com.example.notes.data.repository.UserPreferencesRepository
 import com.example.notes.security.AppLockManager
 import com.example.notes.security.PasscodeSecurityManager
@@ -16,6 +15,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -51,15 +51,7 @@ class SettingsViewModel @Inject constructor(
     private val preferencesState = prefsRepository.userPreferencesFlow.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),
-        initialValue = UserPreferences(
-            themeMode = "SYSTEM",
-            fontScale = 1.0f,
-            useSystemFontSize = true,
-            appLockEnabled = false,
-            biometricUnlockEnabled = false,
-            passcodeHash = null,
-            passcodeSalt = null
-        )
+        initialValue = null
     )
 
     private val _uiState = MutableStateFlow(SettingsUiState(isLoading = true))
@@ -67,7 +59,7 @@ class SettingsViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            preferencesState.collect { prefs ->
+            preferencesState.filterNotNull().collect { prefs ->
                 _uiState.update {
                     it.copy(
                         themeMode = prefs.themeMode,
@@ -314,7 +306,7 @@ class SettingsViewModel @Inject constructor(
     }
 
     private fun verifyCurrentPasscode(rawPasscode: String): Boolean {
-        val preferences = preferencesState.value
+        val preferences = preferencesState.value ?: return false
         val storedHash = preferences.passcodeHash ?: return false
         val storedSalt = preferences.passcodeSalt ?: return false
         return passcodeSecurityManager.verify(rawPasscode.trim(), storedHash, storedSalt)

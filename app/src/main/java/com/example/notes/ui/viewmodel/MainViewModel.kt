@@ -2,7 +2,6 @@ package com.example.notes.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.notes.data.repository.UserPreferences
 import com.example.notes.data.repository.UserPreferencesRepository
 import com.example.notes.security.AppLockManager
 import com.example.notes.security.PasscodeSecurityManager
@@ -10,6 +9,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import javax.inject.Inject
@@ -35,18 +35,10 @@ class MainViewModel @Inject constructor(
     private val preferencesState = repository.userPreferencesFlow.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),
-        initialValue = UserPreferences(
-            themeMode = "SYSTEM",
-            fontScale = 1.0f,
-            useSystemFontSize = true,
-            appLockEnabled = false,
-            biometricUnlockEnabled = false,
-            passcodeHash = null,
-            passcodeSalt = null
-        )
+        initialValue = null
     )
 
-    private val preferencesFlow = preferencesState.map { preferences ->
+    private val preferencesFlow = preferencesState.filterNotNull().map { preferences ->
         val hasPasscode = !preferences.passcodeHash.isNullOrBlank() && !preferences.passcodeSalt.isNullOrBlank()
         appLockManager.syncWithSettings(
             appLockEnabled = preferences.appLockEnabled,
@@ -84,7 +76,7 @@ class MainViewModel @Inject constructor(
     }
 
     fun unlockWithPasscode(input: String): Boolean {
-        val preferences = preferencesState.value
+        val preferences = preferencesState.value ?: return false
         val hash = preferences.passcodeHash ?: return false
         val salt = preferences.passcodeSalt ?: return false
         val isValid = passcodeSecurityManager.verify(input, hash, salt)

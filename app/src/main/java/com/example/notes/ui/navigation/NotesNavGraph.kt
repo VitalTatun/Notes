@@ -16,7 +16,8 @@ import com.example.notes.ui.viewmodel.SettingsViewModel
 
 @Composable
 fun NotesNavGraph(
-    navController: NavHostController
+    navController: NavHostController,
+    settingsViewModel: SettingsViewModel
 ) {
     NavHost(
         navController = navController,
@@ -60,25 +61,25 @@ fun NotesNavGraph(
             enterTransition = {
                 slideInHorizontally(
                     initialOffsetX = { it },
-                    animationSpec = tween(300)
+                    animationSpec = tween(600)
                 ) + fadeIn(animationSpec = tween(300))
             },
             exitTransition = {
                 slideOutHorizontally(
                     targetOffsetX = { -it },
-                    animationSpec = tween(300)
+                    animationSpec = tween(600)
                 ) + fadeOut(animationSpec = tween(300))
             },
             popEnterTransition = {
                 slideInHorizontally(
                     initialOffsetX = { -it },
-                    animationSpec = tween(300)
+                    animationSpec = tween(600)
                 ) + fadeIn(animationSpec = tween(300))
             },
             popExitTransition = {
                 slideOutHorizontally(
                     targetOffsetX = { it },
-                    animationSpec = tween(300)
+                    animationSpec = tween(600)
                 ) + fadeOut(animationSpec = tween(300))
             }
         ) {
@@ -101,7 +102,6 @@ fun NotesNavGraph(
         }
 
         composable<Screen.Settings> {
-            val settingsViewModel: SettingsViewModel = hiltViewModel()
             SettingsScreen(
                 viewModel = settingsViewModel,
                 onBack = { navController.popBackStack() }

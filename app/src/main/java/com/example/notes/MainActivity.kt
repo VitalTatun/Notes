@@ -21,11 +21,13 @@ import com.example.notes.ui.navigation.NotesNavGraph
 import com.example.notes.ui.screens.LockScreen
 import com.example.notes.ui.theme.NotesTheme
 import com.example.notes.ui.viewmodel.MainViewModel
+import com.example.notes.ui.viewmodel.SettingsViewModel
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class MainActivity : FragmentActivity() {
     private val mainViewModel: MainViewModel by viewModels()
+    private val settingsViewModel: SettingsViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -60,7 +62,10 @@ class MainActivity : FragmentActivity() {
 
                         else -> {
                             val navController = rememberNavController()
-                            NotesNavGraph(navController = navController)
+                            NotesNavGraph(
+                                navController = navController,
+                                settingsViewModel = settingsViewModel
+                            )
                         }
                     }
                 }
