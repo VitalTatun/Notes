@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -43,12 +44,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.layout.width
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.notes.security.BiometricAuthManager
 import com.example.notes.ui.components.EditorLoadingScreen
+import com.example.notes.ui.theme.NotesTheme
+import com.example.notes.ui.viewmodel.SettingsUiState
 import com.example.notes.ui.viewmodel.SettingsViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -58,6 +61,48 @@ fun SettingsScreen(
     onBack: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+
+    SettingsScreenContent(
+        uiState = uiState,
+        onBack = onBack,
+        onThemeModeChange = { viewModel.setThemeMode(it) },
+        onFontScaleChange = { viewModel.setFontScale(it) },
+        onUseSystemFontSizeChange = { viewModel.setUseSystemFontSize(it) },
+        onSetupAppLock = { passcode, biometric, onResult ->
+            viewModel.setupAppLock(passcode, biometric, onResult)
+        },
+        onChangePasscode = { current, new, onResult ->
+            viewModel.changePasscode(current, new, onResult)
+        },
+        onDisableAppLock = { current, onResult ->
+            viewModel.disableAppLock(current, onResult)
+        },
+        onBiometricUnlockToggle = { viewModel.setBiometricUnlockEnabled(it) },
+        onExportData = { viewModel.exportData(context) },
+        onImportData = { uri, replace -> viewModel.importData(context, uri, replace) },
+        onDeleteAllData = { viewModel.deleteAllData() },
+        onClearMessage = { viewModel.clearMessage() }
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SettingsScreenContent(
+    uiState: SettingsUiState,
+    onBack: () -> Unit,
+    onThemeModeChange: (String) -> Unit,
+    onFontScaleChange: (Float) -> Unit,
+    onUseSystemFontSizeChange: (Boolean) -> Unit,
+    onSetupAppLock: (String, Boolean, (Boolean) -> Unit) -> Unit,
+    onChangePasscode: (String, String, (Boolean) -> Unit) -> Unit,
+    onDisableAppLock: (String, (Boolean) -> Unit) -> Unit,
+    onBiometricUnlockToggle: (Boolean) -> Unit,
+    onExportData: () -> Unit,
+    onImportData: (android.net.Uri, Boolean) -> Unit,
+    onDeleteAllData: () -> Unit,
+    onClearMessage: () -> Unit
+) {
     val context = LocalContext.current
     val activity = context as? FragmentActivity
     val biometricAuthManager = remember { BiometricAuthManager() }
@@ -73,17 +118,17 @@ fun SettingsScreen(
     val importLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument()
     ) { uri ->
-        uri?.let { viewModel.importData(context, it, replace = importReplaceMode) }
+        uri?.let { onImportData(it, importReplaceMode) }
     }
 
     LaunchedEffect(uiState.message, uiState.error) {
         uiState.message?.let {
             snackbarHostState.showSnackbar(it)
-            viewModel.clearMessage()
+            onClearMessage()
         }
         uiState.error?.let {
             snackbarHostState.showSnackbar(it)
-            viewModel.clearMessage()
+            onClearMessage()
         }
     }
 
@@ -144,7 +189,7 @@ fun SettingsScreen(
                 title = "Разблокировка по отпечатку",
                 checked = uiState.biometricUnlockEnabled,
                 enabled = uiState.hasPasscode && biometricAvailable,
-                onCheckedChange = { viewModel.setBiometricUnlockEnabled(it) }
+                onCheckedChange = { onBiometricUnlockToggle(it) }
             )
 
             if (!biometricAvailable) {
@@ -160,9 +205,9 @@ fun SettingsScreen(
 
             SettingsSectionTitle("Внешний вид")
 
-            ThemeOption("Системная", "SYSTEM", uiState.themeMode) { viewModel.setThemeMode(it) }
-            ThemeOption("Светлая", "LIGHT", uiState.themeMode) { viewModel.setThemeMode(it) }
-            ThemeOption("Темная", "DARK", uiState.themeMode) { viewModel.setThemeMode(it) }
+            ThemeOption("Системная", "SYSTEM", uiState.themeMode) { onThemeModeChange(it) }
+            ThemeOption("Светлая", "LIGHT", uiState.themeMode) { onThemeModeChange(it) }
+            ThemeOption("Темная", "DARK", uiState.themeMode) { onThemeModeChange(it) }
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
@@ -170,7 +215,7 @@ fun SettingsScreen(
             SettingsSwitchItem(
                 title = "Использовать системный размер",
                 checked = uiState.useSystemFontSize,
-                onCheckedChange = { viewModel.setUseSystemFontSize(it) }
+                onCheckedChange = { onUseSystemFontSizeChange(it) }
             )
 
             if (!uiState.useSystemFontSize) {
@@ -185,7 +230,7 @@ fun SettingsScreen(
                     }
                     Slider(
                         value = uiState.fontScale,
-                        onValueChange = { viewModel.setFontScale(it) },
+                        onValueChange = { onFontScaleChange(it) },
                         valueRange = 0.8f..2.0f,
                         steps = 11
                     )
@@ -198,7 +243,7 @@ fun SettingsScreen(
 
             SettingsClickableItem(
                 title = "Экспорт всех записей (JSON)",
-                onClick = { viewModel.exportData(context) }
+                onClick = { onExportData() }
             )
 
             SettingsClickableItem(
@@ -247,7 +292,7 @@ fun SettingsScreen(
             biometricAvailable = biometricAvailable,
             onDismiss = { showSetupPasscodeDialog = false },
             onSave = { passcode, enableBiometric ->
-                viewModel.setupAppLock(passcode, enableBiometric) { success ->
+                onSetupAppLock(passcode, enableBiometric) { success ->
                     if (success) {
                         showSetupPasscodeDialog = false
                     }
@@ -260,7 +305,7 @@ fun SettingsScreen(
         ChangePasscodeDialog(
             onDismiss = { showChangePasscodeDialog = false },
             onSave = { currentPasscode, newPasscode ->
-                viewModel.changePasscode(currentPasscode, newPasscode) { success ->
+                onChangePasscode(currentPasscode, newPasscode) { success ->
                     if (success) {
                         showChangePasscodeDialog = false
                     }
@@ -273,7 +318,7 @@ fun SettingsScreen(
         DisableAppLockDialog(
             onDismiss = { showDisablePasscodeDialog = false },
             onDisable = { currentPasscode ->
-                viewModel.disableAppLock(currentPasscode) { success ->
+                onDisableAppLock(currentPasscode) { success ->
                     if (success) {
                         showDisablePasscodeDialog = false
                     }
@@ -290,7 +335,7 @@ fun SettingsScreen(
             confirmButton = {
                 Button(
                     onClick = {
-                        viewModel.deleteAllData()
+                        onDeleteAllData()
                         showDeleteConfirmDialog = false
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
@@ -333,6 +378,36 @@ fun SettingsScreen(
                     Text("Заменить")
                 }
             }
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun SettingsScreenPreview() {
+    NotesTheme {
+        SettingsScreenContent(
+            uiState = SettingsUiState(
+                themeMode = "SYSTEM",
+                fontScale = 1.0f,
+                useSystemFontSize = true,
+                appLockEnabled = false,
+                biometricUnlockEnabled = false,
+                hasPasscode = false,
+                isLoading = false
+            ),
+            onBack = {},
+            onThemeModeChange = {},
+            onFontScaleChange = {},
+            onUseSystemFontSizeChange = {},
+            onSetupAppLock = { _, _, _ -> },
+            onChangePasscode = { _, _, _ -> },
+            onDisableAppLock = { _, _ -> },
+            onBiometricUnlockToggle = {},
+            onExportData = {},
+            onImportData = { _, _ -> },
+            onDeleteAllData = {},
+            onClearMessage = {}
         )
     }
 }
