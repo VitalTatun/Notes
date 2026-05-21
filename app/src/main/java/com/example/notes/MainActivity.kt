@@ -40,31 +40,31 @@ class MainActivity : FragmentActivity() {
                 themeMode = uiState.themeMode,
                 fontScale = uiState.fontScale,
                 useSystemFontSize = uiState.useSystemFontSize,
-                dynamicColor = true
+                dynamicColor = true,
             ) {
                 SecureWindowEffect(isLocked = uiState.isLocked)
 
                 Surface(
                     modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
+                    color = MaterialTheme.colorScheme.background,
                 ) {
                     when {
                         !uiState.isReady -> EditorLoadingScreen(
                             title = "Загрузка",
-                            onBack = {}
+                            onBack = {},
                         )
 
                         uiState.isLocked -> LockScreen(
                             onUnlock = mainViewModel::unlockWithPasscode,
                             onBiometricSuccess = mainViewModel::unlockWithBiometricSuccess,
-                            biometricEnabled = uiState.biometricUnlockEnabled
+                            biometricEnabled = uiState.biometricUnlockEnabled,
                         )
 
                         else -> {
                             val navController = rememberNavController()
                             NotesNavGraph(
                                 navController = navController,
-                                settingsViewModel = settingsViewModel
+                                settingsViewModel = settingsViewModel,
                             )
                         }
                     }

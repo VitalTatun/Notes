@@ -45,17 +45,16 @@ fun DateFilter(
                     style = MaterialTheme.typography.bodyMedium.copy(
                         fontWeight = FontWeight.Medium,
                         fontSize = 14.sp,
-                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f)
-                                // color = Color.Gray.copy(alpha = 0.8f)
-                    )
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
+                    ),
                 )
                 Text(
                     text = dateText,
                     style = MaterialTheme.typography.bodyLarge.copy(
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary,
-                        fontSize = 14.sp
-                    )
+                        color = MaterialTheme.colorScheme.onSurface,
+                        fontSize = 14.sp,
+                    ),
                 )
             }
         }
@@ -67,7 +66,7 @@ fun DateFilter(
                     containerColor = if (isSelected) MaterialTheme.colorScheme.primary 
                                     else Color.Transparent,
                     contentColor = if (isSelected) MaterialTheme.colorScheme.onPrimary
-                                  else MaterialTheme.colorScheme.onSurfaceVariant
+                                  else MaterialTheme.colorScheme.onSurface
                 )
             ) {
                 Icon(

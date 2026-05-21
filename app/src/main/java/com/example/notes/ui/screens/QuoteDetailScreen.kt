@@ -28,7 +28,7 @@ fun QuoteDetailScreen(
     quote: Quote? = null,
     onSave: (String, String) -> Unit,
     onDelete: (() -> Unit)? = null,
-    onBack: () -> Unit
+    onBack: () -> Unit,
 ) {
     var text by remember { mutableStateOf(quote?.text ?: "") }
     var author by remember { mutableStateOf(quote?.author ?: "") }
@@ -84,11 +84,11 @@ fun QuoteDetailScreen(
                         Icon(
                             imageVector = Icons.Default.Done,
                             contentDescription = "Сохранить",
-                            modifier = Modifier.size(24.dp)
+                            modifier = Modifier.size(24.dp),
                         )
                     }
                 },
-                scrollBehavior = scrollBehavior
+                scrollBehavior = scrollBehavior,
             )
         },
         contentWindowInsets = WindowInsets.systemBars
@@ -167,7 +167,7 @@ fun QuoteDetailScreen(
                     onClick = {
                         onDelete?.invoke()
                         showDeleteDialog = false
-                    }
+                    },
                 ) {
                     Text("Удалить", color = MaterialTheme.colorScheme.error)
                 }
@@ -176,7 +176,7 @@ fun QuoteDetailScreen(
                 TextButton(onClick = { showDeleteDialog = false }) {
                     Text("Отмена")
                 }
-            }
+            },
         )
     }
 }
@@ -189,7 +189,7 @@ fun QuoteDetailNewPreview() {
             QuoteDetailScreen(
                 quote = null,
                 onSave = { _, _ -> },
-                onBack = {}
+                onBack = {},
             )
         }
     }
@@ -209,7 +209,7 @@ fun QuoteDetailEditPreview() {
                 ),
                 onSave = { _, _ -> },
                 onDelete = {},
-                onBack = {}
+                onBack = {},
             )
         }
     }
@@ -229,7 +229,7 @@ fun QuoteDetailDarkPreview() {
                 ),
                 onSave = { _, _ -> },
                 onDelete = {},
-                onBack = {}
+                onBack = {},
             )
         }
     }

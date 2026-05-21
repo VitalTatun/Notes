@@ -15,7 +15,7 @@ import androidx.compose.ui.graphics.Color
 @Composable
 fun EditorLoadingScreen(
     title: String,
-    onBack: () -> Unit
+    onBack: () -> Unit,
 ) {
     Scaffold(
         topBar = {
@@ -25,9 +25,9 @@ fun EditorLoadingScreen(
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Назад")
                     }
-                }
+                },
             )
-        }
+        },
     ) { innerPadding ->
         Box(
             modifier = Modifier
@@ -45,7 +45,7 @@ fun DeleteDialog(
     title: String,
     text: String = "Это действие нельзя отменить.",
     onConfirm: () -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -58,6 +58,6 @@ fun DeleteDialog(
         },
         dismissButton = {
             TextButton(onClick = onDismiss) { Text("Отмена") }
-        }
+        },
     )
 }

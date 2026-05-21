@@ -8,10 +8,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import com.example.notes.R
 
-val BarriecitoFontFamily = FontFamily(
-    Font(R.font.barriecito, FontWeight.Normal)
-)
-
 val GoogleSansFontFamily = FontFamily(
     Font(R.font.google_sans_regular, FontWeight.Normal),
     Font(R.font.google_sans_medium, FontWeight.Medium),
@@ -57,8 +53,8 @@ val AppTypography = Typography(
         letterSpacing = 0.sp
     ),
     headlineSmall = TextStyle(
-        fontFamily = BarriecitoFontFamily, // Сохраняем Barriecito для названия главного экрана
-        fontWeight = FontWeight.Normal,
+        fontFamily = GoogleSansFontFamily,
+        fontWeight = FontWeight.Medium,
         fontSize = 24.sp,
         lineHeight = 32.sp,
         letterSpacing = 0.sp

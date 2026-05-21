@@ -31,7 +31,6 @@ import com.example.notes.data.local.entities.Quote
 import com.example.notes.ui.theme.NotesTheme
 import com.example.notes.util.formatDate
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun QuotesScreen(
     quotes: List<Quote>,
@@ -39,7 +38,7 @@ fun QuotesScreen(
     onDeleteConfirm: (Quote) -> Unit,
     lazyListState: LazyListState = rememberLazyListState(),
     emptyMessage: String = "Цитат пока нет",
-    contentPadding: PaddingValues = PaddingValues(0.dp)
+    contentPadding: PaddingValues = PaddingValues(0.dp),
 ) {
     val clipboardManager = LocalClipboardManager.current
     
@@ -48,7 +47,7 @@ fun QuotesScreen(
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 state = lazyListState,
-                contentPadding = contentPadding
+                contentPadding = contentPadding,
             ) {
                 item {
                     Box(
@@ -79,7 +78,7 @@ fun QuotesScreen(
                             quote = quote,
                             onEditClick = { onEditClick(quote) },
                             onCopyClick = { clipboardManager.setText(AnnotatedString(quote.text)) },
-                            onDeleteClick = { onDeleteConfirm(quote) }
+                            onDeleteClick = { onDeleteConfirm(quote) },
                         )
                         
                         HorizontalDivider(
@@ -100,7 +99,7 @@ fun QuoteItem(
     onEditClick: () -> Unit,
     onCopyClick: () -> Unit,
     onDeleteClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     var showMenu by remember { mutableStateOf(false) }
     val interactionSource = remember { MutableInteractionSource() }
@@ -143,7 +142,7 @@ fun QuoteItem(
 
                 DropdownMenu(
                     expanded = showMenu,
-                    onDismissRequest = { showMenu = false }
+                    onDismissRequest = { showMenu = false },
                 ) {
                     DropdownMenuItem(
                         text = { Text("Редактировать") },
@@ -151,7 +150,7 @@ fun QuoteItem(
                         onClick = {
                             showMenu = false
                             onEditClick()
-                        }
+                        },
                     )
                     DropdownMenuItem(
                         text = { Text("Скопировать") },
@@ -159,7 +158,7 @@ fun QuoteItem(
                         onClick = {
                             showMenu = false
                             onCopyClick()
-                        }
+                        },
                     )
                     HorizontalDivider()
                     DropdownMenuItem(
@@ -174,7 +173,7 @@ fun QuoteItem(
                         onClick = {
                             showMenu = false
                             onDeleteClick()
-                        }
+                        },
                     )
                 }
             }
@@ -217,7 +216,7 @@ fun QuotesScreenPreview() {
                 Quote(3, "Третья цитата.", "Автор 3")
             ),
             onEditClick = {},
-            onDeleteConfirm = {}
+            onDeleteConfirm = {},
         )
     }
 }
@@ -229,7 +228,7 @@ fun QuotesScreenEmptyPreview() {
         QuotesScreen(
             quotes = emptyList(),
             onEditClick = {},
-            onDeleteConfirm = {}
+            onDeleteConfirm = {},
         )
     }
 }

@@ -54,11 +54,10 @@ import com.example.notes.ui.theme.NotesTheme
 import com.example.notes.ui.viewmodel.SettingsUiState
 import com.example.notes.ui.viewmodel.SettingsViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     viewModel: SettingsViewModel,
-    onBack: () -> Unit
+    onBack: () -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
@@ -82,7 +81,7 @@ fun SettingsScreen(
         onExportData = { viewModel.exportData(context) },
         onImportData = { uri, replace -> viewModel.importData(context, uri, replace) },
         onDeleteAllData = { viewModel.deleteAllData() },
-        onClearMessage = { viewModel.clearMessage() }
+        onClearMessage = viewModel::clearMessage
     )
 }
 
@@ -106,14 +105,14 @@ fun SettingsScreenContent(
     val context = LocalContext.current
     val activity = context as? FragmentActivity
     val biometricAuthManager = remember { BiometricAuthManager() }
-    val biometricAvailable = activity != null && biometricAuthManager.isBiometricAvailable(activity)
+    val biometricAvailable = (activity != null) && biometricAuthManager.isBiometricAvailable(activity)
     val snackbarHostState = remember { SnackbarHostState() }
-    var showDeleteConfirmDialog by remember { mutableStateOf(false) }
-    var showImportModeDialog by remember { mutableStateOf(false) }
-    var importReplaceMode by remember { mutableStateOf(false) }
-    var showSetupPasscodeDialog by remember { mutableStateOf(false) }
-    var showChangePasscodeDialog by remember { mutableStateOf(false) }
-    var showDisablePasscodeDialog by remember { mutableStateOf(false) }
+    var showDeleteConfirmDialog by remember { mutableStateOf(value = false) }
+    var showImportModeDialog by remember { mutableStateOf(value = false) }
+    var importReplaceMode by remember { mutableStateOf(value = false) }
+    var showSetupPasscodeDialog by remember { mutableStateOf(value = false) }
+    var showChangePasscodeDialog by remember { mutableStateOf(value = false) }
+    var showDisablePasscodeDialog by remember { mutableStateOf(value = false) }
 
     val importLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument()
@@ -267,7 +266,7 @@ fun SettingsScreenContent(
                         @Suppress("DEPRECATION")
                         context.packageManager.getPackageInfo(context.packageName, 0)
                     }
-                } catch (e: Exception) {
+                } catch (_: Exception) {
                     null
                 }
             }
@@ -595,8 +594,8 @@ fun SettingsSectionTitle(title: String) {
     Text(
         text = title,
         style = MaterialTheme.typography.labelLarge,
-        color = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.padding(16.dp, 14.dp, 16.dp, 4.dp)
+        color = MaterialTheme.colorScheme.onSurface,
+        modifier = Modifier.padding(16.dp, 14.dp, 16.dp, 4.dp),
     )
 }
 

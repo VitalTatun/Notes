@@ -16,14 +16,13 @@ import androidx.compose.ui.unit.dp
 import com.example.notes.data.local.entities.Note
 import com.example.notes.ui.components.NoteItem
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NotesScreen(
     notes: List<Note>,
     onEditClick: (Note) -> Unit,
     onDeleteConfirm: (Note) -> Unit,
     lazyListState: LazyListState = rememberLazyListState(),
-    contentPadding: PaddingValues = PaddingValues(0.dp)
+    contentPadding: PaddingValues = PaddingValues(0.dp),
 ) {
     val clipboardManager = LocalClipboardManager.current
     
@@ -32,7 +31,7 @@ fun NotesScreen(
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 state = lazyListState,
-                contentPadding = contentPadding
+                contentPadding = contentPadding,
             ) {
                 item {
                     Box(
@@ -63,7 +62,7 @@ fun NotesScreen(
                             note = note,
                             onEditClick = { onEditClick(note) },
                             onCopyClick = { clipboardManager.setText(AnnotatedString(note.content)) },
-                            onDeleteClick = { onDeleteConfirm(note) }
+                            onDeleteClick = { onDeleteConfirm(note) },
                         )
                         
                         HorizontalDivider(
@@ -88,7 +87,7 @@ fun NotesScreenPreview() {
                 Note(id = 2, content = "Текст второй заметки", createdAt = System.currentTimeMillis())
             ),
             onEditClick = {},
-            onDeleteConfirm = {}
+            onDeleteConfirm = {},
         )
     }
 }

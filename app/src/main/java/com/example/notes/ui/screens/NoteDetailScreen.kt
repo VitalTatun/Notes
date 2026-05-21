@@ -27,7 +27,7 @@ fun NoteDetailScreen(
     note: Note? = null,
     onSave: (String) -> Unit,
     onDelete: (() -> Unit)? = null,
-    onBack: () -> Unit
+    onBack: () -> Unit,
 ) {
     var content by remember { mutableStateOf(note?.content ?: "") }
     
@@ -82,11 +82,11 @@ fun NoteDetailScreen(
                         Icon(
                             imageVector = Icons.Default.Done,
                             contentDescription = "Сохранить",
-                            modifier = Modifier.size(24.dp)
+                            modifier = Modifier.size(24.dp),
                         )
                     }
                 },
-                scrollBehavior = scrollBehavior
+                scrollBehavior = scrollBehavior,
             )
         },
         contentWindowInsets = WindowInsets.systemBars
@@ -116,7 +116,7 @@ fun NoteDetailScreen(
                         if (content.isEmpty()) {
                             Text(
                                 "Начните писать...",
-                                style = MaterialTheme.typography.bodyMedium,
+                                style = MaterialTheme.typography.bodyLarge,
                                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
                             )
                         }
@@ -138,7 +138,7 @@ fun NoteDetailScreen(
                     onClick = {
                         onDelete?.invoke()
                         showDeleteDialog = false
-                    }
+                    },
                 ) {
                     Text("Удалить", color = MaterialTheme.colorScheme.error)
                 }
@@ -147,7 +147,7 @@ fun NoteDetailScreen(
                 TextButton(onClick = { showDeleteDialog = false }) {
                     Text("Отмена")
                 }
-            }
+            },
         )
     }
 }
@@ -160,7 +160,7 @@ fun NoteDetailNewPreview() {
             NoteDetailScreen(
                 note = null,
                 onSave = {},
-                onBack = {}
+                onBack = {},
             )
         }
     }

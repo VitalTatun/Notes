@@ -34,7 +34,7 @@ fun LockScreen(
     onUnlock: (String) -> Boolean,
     onBiometricSuccess: () -> Unit,
     biometricEnabled: Boolean,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val activity = LocalContext.current as? FragmentActivity
     val biometricAuthManager = rememberBiometricAuthManager()
@@ -56,7 +56,7 @@ fun LockScreen(
                 subtitle = "Подтвердите вход отпечатком пальца",
                 description = "Если не получится, используйте пароль приложения.",
                 onSuccess = onBiometricSuccess,
-                onError = { errorMessage = it }
+                onError = { errorMessage = it },
             )
         }
     }
@@ -66,17 +66,17 @@ fun LockScreen(
             .fillMaxSize()
             .padding(24.dp),
         verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
             text = "Приложение заблокировано",
-            style = MaterialTheme.typography.headlineSmall
+            style = MaterialTheme.typography.headlineSmall,
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
             text = "Введите пароль приложения, чтобы продолжить.",
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Spacer(modifier = Modifier.height(24.dp))
 
@@ -92,8 +92,8 @@ fun LockScreen(
             visualTransformation = PasswordVisualTransformation(),
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Password,
-                imeAction = ImeAction.Done
-            )
+                imeAction = ImeAction.Done,
+            ),
         )
 
         errorMessage?.let {
@@ -101,7 +101,7 @@ fun LockScreen(
             Text(
                 text = it,
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.error
+                color = MaterialTheme.colorScheme.error,
             )
         }
 
@@ -118,7 +118,7 @@ fun LockScreen(
                 }
             },
             modifier = Modifier.fillMaxWidth(),
-            enabled = passcode.isNotBlank()
+            enabled = passcode.isNotBlank(),
         ) {
             Text("Разблокировать")
         }
@@ -133,9 +133,9 @@ fun LockScreen(
                         subtitle = "Подтвердите вход отпечатком пальца",
                         description = "Если не получится, используйте пароль приложения.",
                         onSuccess = onBiometricSuccess,
-                        onError = { errorMessage = it }
+                        onError = { errorMessage = it },
                     )
-                }
+                },
             ) {
                 Text("Войти по отпечатку")
             }

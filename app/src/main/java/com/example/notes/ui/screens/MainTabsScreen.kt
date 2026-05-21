@@ -43,7 +43,6 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainTabsScreen(
-    initialTab: Int = 0,
     notesViewModel: NotesViewModel,
     quotesViewModel: QuotesViewModel,
     onEditNote: (Note) -> Unit,
@@ -51,7 +50,8 @@ fun MainTabsScreen(
     onAddNote: () -> Unit,
     onAddQuote: () -> Unit,
     onSearchQuotesClick: () -> Unit,
-    onSettingsClick: () -> Unit
+    onSettingsClick: () -> Unit,
+    initialTab: Int = 0,
 ) {
     val scope = rememberCoroutineScope()
     val pagerState = rememberPagerState(initialPage = initialTab) { 2 }
@@ -97,7 +97,8 @@ fun MainTabsScreen(
                     TextButton(onClick = {
                         if (isNotesTab) notesViewModel.setSelectedDate(null) else quotesViewModel.setSelectedDate(null)
                         showDatePicker = false
-                    }) { Text("Сбросить") }
+                    },
+                    ) { Text("Сбросить") }
                     Row {
                         TextButton(onClick = { showDatePicker = false }) {
                             Text(stringResource(R.string.cancel))
@@ -109,7 +110,7 @@ fun MainTabsScreen(
                         }) { Text(stringResource(R.string.ok)) }
                     }
                 }
-            }
+            },
         ) { DatePicker(state = datePickerState) }
     }
 
@@ -147,7 +148,7 @@ fun MainTabsContent(
     onDeleteNote: (Note) -> Unit,
     onDeleteQuote: (Quote) -> Unit,
     onSettingsClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val notesLazyListState = rememberLazyListState()
     val quotesLazyListState = rememberLazyListState()
@@ -186,38 +187,39 @@ fun MainTabsContent(
                     Text(
                         text = "Today",
                         style = MaterialTheme.typography.headlineSmall,
-                        color = MaterialTheme.colorScheme.primary,
-                        fontSize = 30.sp
+                        color = MaterialTheme.colorScheme.onSurface,
                     )
                 },
                 actions = {
-                    DateFilter(
-                        isSelected = currentSelectedDate != null,
-                        dateText = currentSelectedDate?.formatFilterDate() ?: "",
-                        onClick = onDateFilterClick
-                    )
-                    IconButton(onClick = onSearchQuotesClick) {
-                        Icon(
-                            imageVector = Icons.Default.Search,
-                            contentDescription = stringResource(R.string.search)
+                    if (isNotesTab) {
+                        DateFilter(
+                            isSelected = currentSelectedDate != null,
+                            dateText = currentSelectedDate?.formatFilterDate() ?: "",
+                            onClick = onDateFilterClick,
                         )
+                    } else {
+                        IconButton(onClick = onSearchQuotesClick) {
+                            Icon(
+                                imageVector = Icons.Default.Search,
+                                contentDescription = stringResource(R.string.search),
+                            )
+                        }
                     }
                     IconButton(onClick = onSettingsClick) {
                         Icon(
                             imageVector = Icons.Default.Settings,
-                            contentDescription = null
+                            contentDescription = null,
                         )
                     }
                 },
                 scrollBehavior = scrollBehavior,
-
             )
         },
         bottomBar = {
             NotesBottomBar(
                 selectedTab = pagerState.currentPage,
                 onTabSelected = onTabSelected,
-                isExpanded = isUIExpanded
+                isExpanded = isUIExpanded,
             )
         },
         floatingActionButton = {
@@ -238,11 +240,11 @@ fun MainTabsContent(
                 },
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary,
-                shape = RoundedCornerShape(16.dp)
+                shape = RoundedCornerShape(16.dp),
             ) {
                 Icon(
                     imageVector = Icons.Default.Add, 
-                    contentDescription = stringResource(if (isNotesTab) R.string.add_note else R.string.add_quote)
+                    contentDescription = stringResource(if (isNotesTab) R.string.add_note else R.string.add_quote),
                 )
             }
         }
@@ -251,7 +253,7 @@ fun MainTabsContent(
             state = pagerState,
             modifier = Modifier
                 .fillMaxSize()
-                .nestedScroll(nestedScrollConnection)
+                .nestedScroll(nestedScrollConnection),
         ) { page ->
             when (page) {
                 0 -> NotesScreen(
@@ -259,14 +261,14 @@ fun MainTabsContent(
                     onEditClick = onEditNote,
                     onDeleteConfirm = onDeleteNote,
                     lazyListState = notesLazyListState,
-                    contentPadding = innerPadding
+                    contentPadding = innerPadding,
                 )
                 1 -> QuotesScreen(
                     quotes = quotes,
                     onEditClick = onEditQuote,
                     onDeleteConfirm = onDeleteQuote,
                     lazyListState = quotesLazyListState,
-                    contentPadding = innerPadding
+                    contentPadding = innerPadding,
                 )
             }
         }
@@ -298,7 +300,7 @@ fun MainTabsScreenPreview() {
             onEditQuote = {},
             onDeleteNote = {},
             onDeleteQuote = {},
-            onSettingsClick = {}
+            onSettingsClick = {},
         )
     }
 }
@@ -324,7 +326,7 @@ fun MainTabsScreenFilteredPreview() {
             onEditQuote = {},
             onDeleteNote = {},
             onDeleteQuote = {},
-            onSettingsClick = {}
+            onSettingsClick = {},
         )
     }
 }

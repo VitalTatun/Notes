@@ -22,7 +22,6 @@ import androidx.compose.ui.unit.dp
 import com.example.notes.data.local.entities.Quote
 import com.example.notes.ui.theme.NotesTheme
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun QuoteSearchScreen(
     query: String,
@@ -30,7 +29,7 @@ fun QuoteSearchScreen(
     onQueryChange: (String) -> Unit,
     onEditQuote: (Quote) -> Unit,
     onDeleteQuote: (Quote) -> Unit,
-    onBack: () -> Unit
+    onBack: () -> Unit,
 ) {
     var quoteToDelete by remember { mutableStateOf<Quote?>(null) }
     val lazyListState = rememberLazyListState()
@@ -49,10 +48,10 @@ fun QuoteSearchScreen(
                 query = query,
                 onQueryChange = onQueryChange,
                 onBack = onBack,
-                focusRequester = focusRequester
+                focusRequester = focusRequester,
             )
         },
-        contentWindowInsets = WindowInsets(0, 0, 0, 0)
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
     ) { innerPadding ->
         val isQueryBlank = remember(query) { query.isBlank() }
 
@@ -79,7 +78,7 @@ fun QuoteSearchScreen(
                         },
                         onDeleteConfirm = { quoteToDelete = it },
                         lazyListState = lazyListState,
-                        emptyMessage = "Ничего не найдено"
+                        emptyMessage = "Ничего не найдено",
                     )
                 }
             }
@@ -93,7 +92,7 @@ fun QuoteSearchScreen(
                 onDeleteQuote(quote)
                 quoteToDelete = null
             },
-            onDismiss = { quoteToDelete = null }
+            onDismiss = { quoteToDelete = null },
         )
     }
 }
@@ -110,7 +109,7 @@ private fun EmptySearchPlaceholder() {
             Text(
                 text = "Поиск цитат",
                 style = MaterialTheme.typography.headlineSmall,
-                color = MaterialTheme.colorScheme.primary
+                color = MaterialTheme.colorScheme.onSurface,
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
@@ -123,19 +122,18 @@ private fun EmptySearchPlaceholder() {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SearchFieldHeader(
     query: String,
     onQueryChange: (String) -> Unit,
     onBack: () -> Unit,
-    focusRequester: FocusRequester
+    focusRequester: FocusRequester,
 ) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .statusBarsPadding()
-            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .padding(horizontal = 16.dp, vertical = 8.dp),
     ) {
         TextField(
             value = query,
@@ -149,7 +147,7 @@ private fun SearchFieldHeader(
                 IconButton(onClick = onBack) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Назад"
+                        contentDescription = "Назад",
                     )
                 }
             },
@@ -167,16 +165,16 @@ private fun SearchFieldHeader(
                 AnimatedVisibility(
                     visible = query.isNotEmpty(),
                     enter = fadeIn(),
-                    exit = fadeOut()
+                    exit = fadeOut(),
                 ) {
                     IconButton(onClick = { onQueryChange("") }) {
                         Icon(
                             imageVector = Icons.Default.Close,
-                            contentDescription = "Очистить"
+                            contentDescription = "Очистить",
                         )
                     }
                 }
-            }
+            },
         )
     }
 }
@@ -185,7 +183,7 @@ private fun SearchFieldHeader(
 private fun DeleteQuoteDialog(
     quote: Quote,
     onConfirm: () -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -200,7 +198,7 @@ private fun DeleteQuoteDialog(
             TextButton(onClick = onDismiss) {
                 Text("Отмена")
             }
-        }
+        },
     )
 }
 

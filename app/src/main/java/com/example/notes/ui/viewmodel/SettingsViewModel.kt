@@ -36,7 +36,7 @@ data class SettingsUiState(
     val hasPasscode: Boolean = false,
     val error: String? = null,
     val message: String? = null,
-    val isLoading: Boolean = true
+    val isLoading: Boolean = true,
 )
 
 @HiltViewModel
@@ -51,7 +51,7 @@ class SettingsViewModel @Inject constructor(
     private val preferencesState = prefsRepository.userPreferencesFlow.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),
-        initialValue = null
+        initialValue = null,
     )
 
     private val _uiState = MutableStateFlow(SettingsUiState(isLoading = true))
@@ -196,8 +196,8 @@ class SettingsViewModel @Inject constructor(
 
                 ShareUtils.shareJsonFile(context, jsonString, fileName)
                 _uiState.update { it.copy(message = "Данные подготовлены к экспорту") }
-            } catch (e: Exception) {
-                _uiState.update { it.copy(error = "Ошибка экспорта: ${e.message}") }
+            } catch (_: Exception) {
+                _uiState.update { it.copy(error = "Ошибка экспорта") }
             }
         }
     }
@@ -241,7 +241,7 @@ class SettingsViewModel @Inject constructor(
                         val obj = it.getJSONObject(i)
                         notesRepository.addNote(
                             content = obj.optString("content", obj.optString("title")),
-                            createdAt = obj.optLong("createdAt", System.currentTimeMillis())
+                            createdAt = obj.optLong("createdAt", System.currentTimeMillis()),
                         )
                     }
                 }
@@ -253,7 +253,7 @@ class SettingsViewModel @Inject constructor(
                         quotesRepository.addQuote(
                             text = obj.getString("text"),
                             author = obj.getString("author"),
-                            createdAt = obj.optLong("createdAt", System.currentTimeMillis())
+                            createdAt = obj.optLong("createdAt", System.currentTimeMillis()),
                         )
                     }
                 }
@@ -276,7 +276,7 @@ class SettingsViewModel @Inject constructor(
                     val createdAt = now - (daysAgo * dayMillis) - (i * 60_000L)
                     notesRepository.addNote(
                         content = "Это содержание тестовой заметки номер $i. Здесь может быть довольно длинный текст для проверки прокрутки и производительности списка в Material 3.",
-                        createdAt = createdAt
+                        createdAt = createdAt,
                     )
                 }
 
@@ -286,7 +286,7 @@ class SettingsViewModel @Inject constructor(
                     "Воображение важнее, чем знания.",
                     "Будь собой, все остальные роли уже заняты.",
                     "Все счастливые семьи похожи друг на друга, каждая несчастливая семья несчастлива по-своему.",
-                    "Слухи о моей смерти несколько преувеличены."
+                    "Слухи о моей смерти несколько преувеличены.",
                 )
 
                 for (i in 1..50) {
@@ -295,7 +295,7 @@ class SettingsViewModel @Inject constructor(
                     quotesRepository.addQuote(
                         text = quotes[i % quotes.size] + " (Вариант #$i)",
                         author = authors[i % authors.size],
-                        createdAt = createdAt
+                        createdAt = createdAt,
                     )
                 }
                 _uiState.update { it.copy(message = "Добавлено по 50 тестовых записей за последние 7 дней") }

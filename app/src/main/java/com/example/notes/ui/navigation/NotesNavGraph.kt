@@ -17,7 +17,7 @@ import com.example.notes.ui.viewmodel.SettingsViewModel
 @Composable
 fun NotesNavGraph(
     navController: NavHostController,
-    settingsViewModel: SettingsViewModel
+    settingsViewModel: SettingsViewModel,
 ) {
     NavHost(
         navController = navController,
@@ -25,7 +25,7 @@ fun NotesNavGraph(
         enterTransition = { fadeIn(animationSpec = tween(220)) },
         exitTransition = { fadeOut(animationSpec = tween(180)) },
         popEnterTransition = { fadeIn(animationSpec = tween(220)) },
-        popExitTransition = { fadeOut(animationSpec = tween(180)) }
+        popExitTransition = { fadeOut(animationSpec = tween(180)) },
     ) {
         composable<Screen.MainNotes> { backStackEntry ->
             val route: Screen.MainNotes = backStackEntry.toRoute()
@@ -53,7 +53,7 @@ fun NotesNavGraph(
                 },
                 onSettingsClick = {
                     navController.navigate(Screen.Settings)
-                }
+                },
             )
         }
 
@@ -61,27 +61,27 @@ fun NotesNavGraph(
             enterTransition = {
                 slideInHorizontally(
                     initialOffsetX = { it },
-                    animationSpec = tween(600)
+                    animationSpec = tween(600),
                 ) + fadeIn(animationSpec = tween(300))
             },
             exitTransition = {
                 slideOutHorizontally(
                     targetOffsetX = { -it },
-                    animationSpec = tween(600)
+                    animationSpec = tween(600),
                 ) + fadeOut(animationSpec = tween(300))
             },
             popEnterTransition = {
                 slideInHorizontally(
                     initialOffsetX = { -it },
-                    animationSpec = tween(600)
+                    animationSpec = tween(600),
                 ) + fadeIn(animationSpec = tween(300))
             },
             popExitTransition = {
                 slideOutHorizontally(
                     targetOffsetX = { it },
-                    animationSpec = tween(600)
+                    animationSpec = tween(600),
                 ) + fadeOut(animationSpec = tween(300))
-            }
+            },
         ) {
             val quotesViewModel: QuotesViewModel = hiltViewModel()
             val query by quotesViewModel.searchQuery.collectAsState()
@@ -97,14 +97,14 @@ fun NotesNavGraph(
                 onDeleteQuote = { quote ->
                     quotesViewModel.deleteQuote(quote)
                 },
-                onBack = { navController.popBackStack() }
+                onBack = navController::popBackStack,
             )
         }
 
         composable<Screen.Settings> {
             SettingsScreen(
                 viewModel = settingsViewModel,
-                onBack = { navController.popBackStack() }
+                onBack = navController::popBackStack,
             )
         }
 
@@ -123,12 +123,12 @@ fun NotesNavGraph(
                         navController.popBackStack()
                     },
                     onDelete = null,
-                    onBack = { navController.popBackStack() }
+                    onBack = navController::popBackStack,
                 )
             } else if (existingQuote == null) {
                 EditorLoadingScreen(
                     title = "Цитата",
-                    onBack = { navController.popBackStack() }
+                    onBack = navController::popBackStack,
                 )
             } else {
                 QuoteDetailScreen(
@@ -141,7 +141,7 @@ fun NotesNavGraph(
                         quotesViewModel.deleteQuote(existingQuote!!)
                         navController.popBackStack()
                     },
-                    onBack = { navController.popBackStack() }
+                    onBack = navController::popBackStack,
                 )
             }
         }
@@ -161,12 +161,12 @@ fun NotesNavGraph(
                         navController.popBackStack()
                     },
                     onDelete = null,
-                    onBack = { navController.popBackStack() }
+                    onBack = navController::popBackStack,
                 )
             } else if (existingNote == null) {
                 EditorLoadingScreen(
                     title = "Заметка",
-                    onBack = { navController.popBackStack() }
+                    onBack = navController::popBackStack,
                 )
             } else {
                 NoteDetailScreen(
@@ -179,7 +179,7 @@ fun NotesNavGraph(
                         notesViewModel.deleteNote(existingNote!!)
                         navController.popBackStack()
                     },
-                    onBack = { navController.popBackStack() }
+                    onBack = navController::popBackStack,
                 )
             }
         }
