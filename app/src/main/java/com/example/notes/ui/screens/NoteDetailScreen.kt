@@ -17,6 +17,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.notes.data.local.entities.Note
 import com.example.notes.ui.theme.NotesTheme
 
@@ -108,7 +109,8 @@ fun NoteDetailScreen(
                     .padding(horizontal = 16.dp, vertical = 4.dp)
                     .focusRequester(focusRequester),
                 textStyle = MaterialTheme.typography.bodyMedium.copy(
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontSize = 16.sp,
                 ),
                 cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
                 decorationBox = { innerTextField ->
@@ -116,15 +118,16 @@ fun NoteDetailScreen(
                         if (content.isEmpty()) {
                             Text(
                                 "Начните писать...",
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    fontSize = 16.sp,
+                                ),
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
                             )
                         }
                         innerTextField()
                     }
                 }
             )
-            Spacer(modifier = Modifier.height(20.dp))
         }
     }
 

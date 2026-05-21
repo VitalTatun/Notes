@@ -51,7 +51,7 @@ fun NoteItem(
                     style = MaterialTheme.typography.labelLarge.copy(
                         fontWeight = FontWeight.SemiBold,
                     ),
-                    color = MaterialTheme.colorScheme.onSurface,
+                    color = MaterialTheme.colorScheme.primary
                 )
             }
 

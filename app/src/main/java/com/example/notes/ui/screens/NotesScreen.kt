@@ -49,8 +49,8 @@ fun NotesScreen(
                 modifier = Modifier.fillMaxSize(),
                 state = lazyListState,
                 contentPadding = PaddingValues(
-                    start = 16.dp, 
-                    end = 16.dp, 
+                    start = 16.dp,
+                    end = 16.dp,
                     top = contentPadding.calculateTopPadding(),
                     bottom = contentPadding.calculateBottomPadding() + 80.dp
                 ),

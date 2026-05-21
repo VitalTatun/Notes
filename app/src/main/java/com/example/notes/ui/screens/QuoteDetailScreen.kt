@@ -17,6 +17,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.notes.data.local.entities.Quote
 import com.example.notes.ui.theme.NotesTheme
 import androidx.compose.foundation.text.BasicTextField
@@ -112,7 +113,8 @@ fun QuoteDetailScreen(
                     .focusRequester(focusRequester),
                 textStyle = MaterialTheme.typography.bodyLarge.copy(
                     fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontSize = 18.sp,
                 ),
                 cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
                 decorationBox = { innerTextField ->
@@ -120,9 +122,11 @@ fun QuoteDetailScreen(
                         if (author.isEmpty()) {
                             Text(
                                 "Автор",
-                                style = MaterialTheme.typography.bodyLarge,
+                                style = MaterialTheme.typography.bodyLarge.copy(
+                                    fontSize = 18.sp,
+                                ),
                                 fontWeight = FontWeight.SemiBold,
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
                             )
                         }
                         innerTextField()
@@ -137,7 +141,8 @@ fun QuoteDetailScreen(
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 4.dp),
                 textStyle = MaterialTheme.typography.bodyMedium.copy(
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontSize = 16.sp,
                 ),
                 cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
                 decorationBox = { innerTextField ->
@@ -145,8 +150,8 @@ fun QuoteDetailScreen(
                         if (text.isEmpty()) {
                             Text(
                                 "Текст цитаты",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
                             )
                         }
                         innerTextField()

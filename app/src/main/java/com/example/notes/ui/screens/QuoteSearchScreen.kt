@@ -109,7 +109,7 @@ private fun EmptySearchPlaceholder() {
             Text(
                 text = "Поиск цитат",
                 style = MaterialTheme.typography.headlineSmall,
-                color = MaterialTheme.colorScheme.onSurface,
+                color = MaterialTheme.colorScheme.primary
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(

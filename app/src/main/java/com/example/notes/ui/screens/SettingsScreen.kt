@@ -594,8 +594,8 @@ fun SettingsSectionTitle(title: String) {
     Text(
         text = title,
         style = MaterialTheme.typography.labelLarge,
-        color = MaterialTheme.colorScheme.onSurface,
-        modifier = Modifier.padding(16.dp, 14.dp, 16.dp, 4.dp),
+        color = MaterialTheme.colorScheme.primary,
+        modifier = Modifier.padding(16.dp, 14.dp, 16.dp, 4.dp)
     )
 }
 
